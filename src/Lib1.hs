@@ -5,10 +5,6 @@ module Lib1(
 ) where
 
 import Types
-import Data.Aeson
-import Data.ByteString.Lazy.Char8 (unpack)
-import GHC.Generics (Generic)
-import Data.ByteString.Lazy.Char8 (pack, putStrLn)
 import Prelude
 
 -- This is a state of your game.
@@ -19,57 +15,20 @@ import Prelude
 data State = State [String] 
     deriving Show
 
-data Square = Square {
-    coord :: Coord,
-    chr :: [Char]
-} deriving (Generic, Show, Eq)
-instance ToJSON Square
-instance FromJSON Square
-instance FromJSON Coord
-
 -- IMPLEMENT
 -- This is very initial state of your program
 emptyState :: State
-emptyState = State [unpack (encode [
-    Square {coord = Coord {col = 1, row = 1}, chr = " "}, 
-    Square {coord = Coord {col = 2, row = 1}, chr = " "}, 
-    Square {coord = Coord {col = 3, row = 1}, chr = " "},
-    Square {coord = Coord {col = 1, row = 2}, chr = " "}, 
-    Square {coord = Coord {col = 2, row = 2}, chr = " "}, 
-    Square {coord = Coord {col = 3, row = 2}, chr = " "},
-    Square {coord = Coord {col = 1, row = 3}, chr = " "}, 
-    Square {coord = Coord {col = 2, row = 3}, chr = " "}, 
-    Square {coord = Coord {col = 3, row = 3}, chr = " "}])]
+emptyState = State ["Initial state"]
 -------------------- -------------------------------
 -- IMPLEMENT
 -- This adds game data to initial state 
 gameStart :: State -> Document -> State
 gameStart (State l) d = State $ ("Game started: " ++ show d) : l
 
--- gets the last element of a list
-listLast :: [a] -> a
-listLast [x] = x --base case is when there's just one element remaining
-listLast (_:xs) = listLast xs --if there's anything in the head, continue until there's one element left
-listLast [] = error "Can't do last of an empty list!"
-
-showBoardLine :: [Square] -> [Char]
-showBoardLine (a:b:c:rest) = "| " ++ chr a ++ " | " ++ chr b ++ " | " ++ chr c ++ " |\n"
-
-boardToString :: [[Square]] -> String
-boardToString lst = concatMap showBoardLine lst
-
 -- IMPLEMENT
 -- renders your game board
 render :: State -> String
-render (State l) = do
-    case decode (pack (listLast l)) :: Maybe [Square] of
-        Nothing -> show "Error: can't decode the file."
-        Just board -> do
-            show $ boardToString [row1, row2, row3]
-                where
-                    row1 = board
-                    row2 = drop 3 board
-                    row3 = drop 6 board
+render = show
 
 -- IMPLEMENT
 -- Make check from current state
