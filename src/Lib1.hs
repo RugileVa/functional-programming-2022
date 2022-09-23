@@ -10,11 +10,9 @@ import Prelude
 import Types (Document(DMap))
 
 data Cell =  Blank 
-            | Sea 
-            | Ship
+            | Ship deriving Eq
 instance Show Cell where
     show Blank  = " "
-    show Sea    = "~"
     show Ship   = "x"
 
 -- This is a state of your game.
@@ -70,11 +68,27 @@ render state = do
 mkCheck :: State -> Check
 mkCheck _ = Check []
 
+-- Removes the Nth item (index being N-1) from a list
+removeNth :: Int -> [a] -> ([a], [a])
+removeNth index lst = (left, right)
+    where 
+        (left, ys) = splitAt (index - 1) lst
+        right = drop 1 ys
+
+-- Given a board, piece, and index to place it in, place piece
+toggleCell :: [a] -> a -> Int -> [a]
+toggleCell board piece n = xs ++ [piece] ++ ys
+    where (xs, ys) = removeNth n board
+
 -- IMPLEMENT
 -- Toggle state's value
 -- Receive raw user input tokens
 toggle :: State -> [String] -> State
-toggle state pos = state
+toggle state pos = do
+    state { rowData = rowData state, colData = colData state, board = newBoard, document = document state} 
+    where
+        newCellType = if (board state) !! ((read (pos !! 0)) - 1) == Blank then Ship else Blank
+        newBoard = toggleCell (board state) newCellType ((read (pos !! 0)))
 
 -- IMPLEMENT
 -- Adds hint data to the game state
