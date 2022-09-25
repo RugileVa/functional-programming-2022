@@ -27,9 +27,8 @@ data State = State {
     board :: [Cell]
 } deriving Show
 
-
-boardToString :: [Cell] -> [Char]
-boardToString (a:b:c:d:e:f:g:h:i:j:rest) = "| " ++ show a ++ " | " ++ show b ++ " | " ++ show c ++ " | " ++ show d ++ " | " ++ show e ++ " | " ++ show f ++ " | " ++ show g ++ " | " ++ show h ++ " | " ++ show i ++ " | " ++ show j ++ " |"
+intersperseRow :: [Cell] -> String
+intersperseRow ys = "| " ++ concatMap (\y -> show y ++ " | ") ys
 
 lastRowToString :: Int -> String
 lastRowToString x = "  " ++ show x ++ " "
@@ -48,20 +47,20 @@ gameStart state d = State { rowData = rowData state, colData = colData state, bo
 -- renders your game board
 render :: State -> String
 render state = do
-    concat (rowNumBoard ++ (map lastRowToString (colData state)))
+    concat (rowNumBoard ++ map lastRowToString (colData state))
     where
-        plainBoard  = map boardToString [firstLn, secondLn, thirdLn, fourthLn, fifthLn, sixthLn, seventhLn, eighthLn, ninthLn, tenthLn]
+        plainBoard  = map intersperseRow [firstLn, secondLn, thirdLn, fourthLn, fifthLn, sixthLn, seventhLn, eighthLn, ninthLn, tenthLn]
         rowNumBoard = [(plainBoard !! x) ++ " " ++ show (rowData state !! x) ++ "\n------------------------------------------\n" | x <- [0..9]]
-        firstLn     = board state
-        secondLn    = drop 10 (board state)
-        thirdLn     = drop 20 (board state) 
-        fourthLn    = drop 30 (board state)
-        fifthLn     = drop 40 (board state) 
-        sixthLn     = drop 50 (board state) 
-        seventhLn   = drop 60 (board state)
-        eighthLn    = drop 70 (board state)
-        ninthLn     = drop 80 (board state) 
-        tenthLn     = drop 90 (board state) 
+        firstLn     = take 10 $ board state
+        secondLn    = take 10 $ drop 10 (board state)
+        thirdLn     = take 10 $ drop 20 (board state) 
+        fourthLn    = take 10 $ drop 30 (board state)
+        fifthLn     = take 10 $ drop 40 (board state) 
+        sixthLn     = take 10 $ drop 50 (board state)
+        seventhLn   = take 10 $ drop 60 (board state)
+        eighthLn    = take 10 $ drop 70 (board state)
+        ninthLn     = take 10 $ drop 80 (board state) 
+        tenthLn     = take 10 $ drop 90 (board state) 
 
 -- IMPLEMENT
 -- Make check from current state
@@ -84,11 +83,10 @@ toggleCell board piece n = xs ++ [piece] ++ ys
 -- Toggle state's value
 -- Receive raw user input tokens
 toggle :: State -> [String] -> State
-toggle state pos = do
-    state { rowData = rowData state, colData = colData state, board = newBoard, document = document state} 
-    where
-        newCellType = if (board state) !! ((read (pos !! 0)) - 1) == Blank then Ship else Blank
-        newBoard = toggleCell (board state) newCellType ((read (pos !! 0)))
+toggle state pos = state { rowData = rowData state, colData = colData state, board = newBoard, document = document state} 
+    where 
+        newCellType = if board state !! (((read (head pos) - 1) * 10 + read (pos !! 1)) - 1) == Blank then Ship else Blank
+        newBoard = toggleCell (board state) newCellType ((read (head pos) - 1) * 10 + read (pos !! 1))
 
 -- IMPLEMENT
 -- Adds hint data to the game state
