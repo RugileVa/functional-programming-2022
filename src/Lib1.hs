@@ -38,10 +38,37 @@ lastRowToString x = "  " ++ show x ++ " "
 emptyState :: State
 emptyState = State {rowData = [2,0,2,2,2,0,6,0,3,3], colData = [1,1,2,3,1,4,2,4,2,0], board = take 100 (repeat Blank), document = DNull}
 -------------------- -------------------------------
+
+takeColsList :: Document -> Document
+takeColsList (DMap l) = dmap
+    where
+        (str, dmap) = head (drop 1 l)
+
+takeRowsList :: Document -> Document
+takeRowsList (DMap l) = dmap
+    where 
+        (str, dmap) = head (drop 2 l)
+
+extractListFromDMap :: Document -> [(String, Document)]
+extractListFromDMap (DMap l) = l
+
+append :: Int -> [Int] -> [Int]
+append a [] = [a]
+append a (x:xs) = x : append a xs
+
+traverseDMap :: Document -> [Int] -> [Int]
+traverseDMap (DMap [(_, DInteger num),(_, DNull)]) numbers  = append num numbers
+traverseDMap (DMap [(_, DInteger num),(_, dmap)]) numbers = traverseDMap dmap (append num numbers)
+
 -- IMPLEMENT
 -- This adds game data to initial state 
 gameStart :: State -> Document -> State
-gameStart state d = State { rowData = rowData state, colData = colData state, board = board state, document = d }
+gameStart state d = State { 
+    rowData = traverseDMap (takeRowsList d) [], 
+    colData = traverseDMap (takeColsList d) [],
+    board = board state, 
+    document = d 
+}
 
 -- IMPLEMENT
 -- renders your game board
