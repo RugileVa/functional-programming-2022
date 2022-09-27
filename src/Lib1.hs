@@ -36,7 +36,7 @@ lastRowToString x = "  " ++ show x ++ " "
 -- IMPLEMENT
 -- This is very initial state of your program
 emptyState :: State
-emptyState = State {rowData = [2,0,2,2,2,0,6,0,3,3], colData = [1,1,2,3,1,4,2,4,2,0], board = take 100 (repeat Blank), document = DNull}
+emptyState = State {rowData = [], colData = [], board = take 100 (repeat Blank), document = DNull}
 -------------------- -------------------------------
 
 takeColsList :: Document -> Document
