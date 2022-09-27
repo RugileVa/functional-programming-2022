@@ -49,9 +49,6 @@ takeRowsList (DMap l) = dmap
     where 
         (str, dmap) = head (drop 2 l)
 
-extractListFromDMap :: Document -> [(String, Document)]
-extractListFromDMap (DMap l) = l
-
 append :: Int -> [Int] -> [Int]
 append a [] = [a]
 append a (x:xs) = x : append a xs
