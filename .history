@@ -1,4 +1,53 @@
 show
+toggle 95
+toggle 9 4
+toggle 9 3
+show
+toggle 8 5
+toggle 8 4
+toggle 8 3
+show
+toggle 8 5
+toggle 8 4
+toggle 8 3
+show
+toggle 7 8
+toggle 7 6
+show
+toggle 7 4
+toggle 7 3
+toggle 7 2
+show
+toggle 7 1
+show
+toggle 5 8
+show
+toggle 5 7
+show
+toggle 5 7
+show
+toggle 5 6
+show
+toggle 4 6
+show
+toggle 4 4
+show
+toggle 3 9
+toggle 3 8
+show
+toggle 1 7
+show
+toggle 1 6
+show
+toggle 6 1
+show
+toggle 6 1
+check
+show
+show
+toggle 0 0
+show
+show
 toggle 1
 show
 show
@@ -49,43 +98,3 @@ toggle J10
 toggle K10
 toggle K10
 show 
-show 
-toggle K10
-toggle A1
-toggle A0
-show 
-toggle B0
-toggle A1
-toggle 
-toggle A   ff gg
-toggle A   ff
-toggle A 10
-toggle 
-toggle 
-show
-check 
-check 
-show
-check 
-check 
-check 
-check 
-check 
-check
-show
-check 
-check 
-check 
-show 
-toggle 
-show
-how
- show   
- show 
-hint
-show
-show
-show
-show fsdf
-draw
-draw 
