@@ -27,12 +27,6 @@ data State = State {
     board :: [Cell]
 } deriving Show
 
-intersperseRow :: [Cell] -> String
-intersperseRow ys = "| " ++ concatMap (\y -> show y ++ " | ") ys
-
-lastRowToString :: Int -> String
-lastRowToString x = "  " ++ show x ++ " "
-
 -- IMPLEMENT
 -- This is very initial state of your program
 emptyState :: State
@@ -69,6 +63,13 @@ gameStart state d = State {
 
 -- IMPLEMENT
 -- renders your game board
+
+intersperseRow :: [Cell] -> String
+intersperseRow ys = "| " ++ concatMap (\y -> show y ++ " | ") ys
+
+lastRowToString :: Int -> String
+lastRowToString x = "  " ++ show x ++ " "
+
 render :: State -> String
 render state = do
     concat (rowNumBoard ++ map lastRowToString (colData state))
@@ -88,8 +89,35 @@ render state = do
 
 -- IMPLEMENT
 -- Make check from current state
+positions :: (a -> Bool) -> [a] -> [Int] 
+positions p l = positionsIndex 0 p l
+     where
+     positionsIndex :: Int -> (a -> Bool) -> [a] -> [Int] 
+     positionsIndex _ _ []     = []
+     positionsIndex index p (x:xs) = if p x then index : positionsIndex (index + 1) p xs else positionsIndex (index + 1) p xs
+
+predicate :: Cell -> Bool
+predicate c = c == Ship 
+
+findXfrom1Dto2D :: Int -> Int
+findXfrom1Dto2D d = mod d 10 
+     
+findYfrom1Dto2D :: Int-> Int
+findYfrom1Dto2D d = div d 10 
+
+newListXY :: [Cell] -> [(Int,Int)]
+newListXY l = zip li1 li2 
+     where li' = positions predicate l
+           li1 = map findXfrom1Dto2D li'
+           li2 = map findYfrom1Dto2D li'
+
+toCoord :: [(Int, Int)] -> [Coord] 
+toCoord [] = []
+toCoord ((x,y):sd) = Coord x y : toCoord sd
+
 mkCheck :: State -> Check
-mkCheck _ = Check []
+mkCheck state = Check (toCoord (newListXY (board state)) )
+
 
 -- Removes the Nth item (index being N-1) from a list
 removeNth :: Int -> [a] -> ([a], [a])
