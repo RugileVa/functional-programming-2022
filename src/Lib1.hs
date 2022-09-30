@@ -90,7 +90,7 @@ render state = do
 -- IMPLEMENT
 -- Make check from current state
 positions :: (a -> Bool) -> [a] -> [Int] 
-positions p xs = positionsIndex 0 p xs
+positions p l = positionsIndex 0 p l
      where
      positionsIndex :: Int -> (a -> Bool) -> [a] -> [Int] 
      positionsIndex _ _ []     = []
