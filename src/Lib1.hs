@@ -54,8 +54,8 @@ append a [] = [a]
 append a (x:xs) = x : append a xs
 
 traverseDMap :: Document -> [Int] -> [Int]
-traverseDMap (DMap [(_, DInteger num),(_, DNull)]) numbers  = append num numbers
-traverseDMap (DMap [(_, DInteger num),(_, dmap)]) numbers = traverseDMap dmap (append num numbers)
+traverseDMap (DMap [(_, DInteger num),(_, DNull)]) numbers  = num : numbers
+traverseDMap (DMap [(_, DInteger num),(_, dmap)]) numbers = traverseDMap dmap (num : numbers)
 
 -- IMPLEMENT
 -- This adds game data to initial state 
@@ -109,10 +109,10 @@ toggleCell board piece n = xs ++ [piece] ++ ys
 toggle :: State -> [String] -> State
 toggle state pos = state { rowData = rowData state, colData = colData state, board = newBoard, document = document state} 
     where 
-        newCellType = if board state !! (((read (head pos) - 1) * 10 + read (pos !! 1)) - 1) == Blank then Ship else Blank
-        newBoard = toggleCell (board state) newCellType ((read (head pos) - 1) * 10 + read (pos !! 1))
+        newCellType = if board state !! ((read (head pos)) + read (pos !! 1) * 10) == Blank then Ship else Blank
+        newBoard = toggleCell (board state) newCellType (read (head pos) + 1 + read (pos !! 1) * 10)
 
 -- IMPLEMENT
 -- Adds hint data to the game state
 hint :: State -> Document -> State
-hint state h = state
+hint state h = State {rowData = rowData state, colData = colData state, document = document state, board = board state}
