@@ -109,8 +109,8 @@ toggleCell board piece n = xs ++ [piece] ++ ys
 toggle :: State -> [String] -> State
 toggle state pos = state { rowData = rowData state, colData = colData state, board = newBoard, document = document state} 
     where 
-        newCellType = if board state !! ((read (head pos)) + read (pos !! 1) * 10) == Blank then Ship else Blank
-        newBoard = toggleCell (board state) newCellType (read (head pos) + 1 + read (pos !! 1) * 10)
+        newCellType = if board state !! ((read (head pos) - 1) + (read (pos !! 1) - 1) * 10) == Blank then Ship else Blank
+        newBoard = toggleCell (board state) newCellType (read (head pos) + (read (pos !! 1) - 1) * 10)
 
 toggleShipHint :: [Cell] -> [(Int, Int)] -> [Cell]
 toggleShipHint board [] = board
