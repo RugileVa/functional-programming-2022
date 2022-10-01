@@ -54,8 +54,8 @@ append a [] = [a]
 append a (x:xs) = x : append a xs
 
 traverseDMap :: Document -> [Int] -> [Int]
-traverseDMap (DMap [(_, DInteger num),(_, DNull)]) numbers  = num : numbers
-traverseDMap (DMap [(_, DInteger num),(_, dmap)]) numbers = traverseDMap dmap (num : numbers)
+traverseDMap (DMap [(_, DInteger num),(_, DNull)]) numbers  = append num numbers
+traverseDMap (DMap [(_, DInteger num),(_, dmap)]) numbers = traverseDMap dmap (append num numbers)
 
 -- IMPLEMENT
 -- This adds game data to initial state 
