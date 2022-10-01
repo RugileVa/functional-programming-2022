@@ -112,7 +112,25 @@ toggle state pos = state { rowData = rowData state, colData = colData state, boa
         newCellType = if board state !! ((read (head pos)) + read (pos !! 1) * 10) == Blank then Ship else Blank
         newBoard = toggleCell (board state) newCellType (read (head pos) + 1 + read (pos !! 1) * 10)
 
+toggleShipHint :: [Cell] -> [(Int, Int)] -> [Cell]
+toggleShipHint board [] = board
+toggleShipHint board ((x, y):xs) = toggleShipHint newBoard xs
+    where 
+        newBoard = toggleCell board Ship (x + 1 + y * 10)
+
 -- IMPLEMENT
 -- Adds hint data to the game state
 hint :: State -> Document -> State
-hint state h = State {rowData = rowData state, colData = colData state, document = document state, board = board state}
+hint state (DMap [(_, DList l)]) = State {
+    rowData = rowData state, 
+    colData = colData state, 
+    document = document state, 
+    board = toggleShipHint (board state) (getCoord l [])
+}
+
+getCoord :: [Document] -> [(Int, Int)] -> [(Int, Int)]
+getCoord [] coords = coords
+getCoord (dmap:xs) coords = getCoord xs (extractNumbers dmap : coords)
+
+extractNumbers :: Document -> (Int, Int)
+extractNumbers (DMap [(_,DInteger x),(_,DInteger y)]) = (x, y)
