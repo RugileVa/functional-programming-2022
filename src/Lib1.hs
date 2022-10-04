@@ -7,7 +7,6 @@ module Lib1(
 
 import Types
 import Prelude
-import Types (Document(DMap))
 
 data Cell =  Blank 
             | Ship deriving Eq
