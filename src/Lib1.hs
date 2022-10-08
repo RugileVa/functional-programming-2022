@@ -1,8 +1,10 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DataKinds #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
 module Lib1(
-    State(..), emptyState, gameStart, render, mkCheck, toggle, hint
+    State(..), emptyState, gameStart, render, mkCheck, toggle, hint, getCoord, extractNumbers, toggleShipHint, toggleCell, removeNth, traverseDMap, takeColsList, takeRowsList
 ) where
 
 import Types
@@ -35,12 +37,12 @@ emptyState = State {rowData = [], colData = [], board = take 100 (repeat Blank),
 takeColsList :: Document -> Document
 takeColsList (DMap l) = dmap
     where
-        (str, dmap) = head (drop 1 l)
+        (_, dmap) = head (drop 1 l)
 
 takeRowsList :: Document -> Document
 takeRowsList (DMap l) = dmap
     where 
-        (str, dmap) = head (drop 2 l)
+        (_, dmap) = head (drop 2 l)
 
 append :: Int -> [Int] -> [Int]
 append a [] = [a]
