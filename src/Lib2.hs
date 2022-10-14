@@ -30,6 +30,7 @@ gameStart state d = Right State {
     board = board state, 
     document = d 
 }
+gameStart _ _ = Left "Game start issue"
 
 -- IMPLEMENT
 -- Adds hint data to the game state
@@ -41,6 +42,9 @@ hint state (DMap [(_, DList l)]) = Right State {
     document = document state, 
     board = toggleShipHint (board state) (getCoord l [])
 }
+hint _ _ = Left "hint issue"
+
+
 -- hint state (DMap (([], (DList [])):_:_)) = Right state
 -- hint state (DMap (([], (DList (_:_))):_:_)) = Right state
 -- hint state (DMap (((_:_), (DList (_:_))):_:_)) = Right state
