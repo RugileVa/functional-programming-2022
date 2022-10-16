@@ -71,6 +71,7 @@ intersperseRow ys = "| " ++ concatMap (\y -> show y ++ " | ") ys
 lastRowToString :: Int -> String
 lastRowToString x = "  " ++ show x ++ " "
 
+
 render :: State -> String
 render state = do
     concat (rowNumBoard ++ map lastRowToString (colData state))
