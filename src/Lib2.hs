@@ -4,8 +4,9 @@
 module Lib2(renderDocument, hint, gameStart) where
 
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DNull, DString), Check (coords), Coord (col, row) )
-import Lib1 (State(..), getCoord, toggleShipHint, traverseDMap, takeRowsList, takeColsList)
+import Lib1 (State(..), getCoord, toggleShipHint, extractHintNumber, getDMapFromGameStart, getByKeyFromGameStart, traverseDMap, checkKey)
 import Data.Yaml (YamlMark(yamlColumn))
+import Data.Aeson (JSONKeyOptions(keyModifier))
 
 coordsToDMap :: Coord -> Document
 coordsToDMap coord = DMap [("col", DInteger (col coord)), ("row", DInteger (row coord))]
@@ -36,25 +37,55 @@ mapCoordToYaml (DMap [(str1, DInteger int1), (str2, DInteger int2)]) =
 -- This adds game data to initial state
 -- Errors are reported via Either but not error 
 gameStart :: State -> Document -> Either String State
-gameStart state d = Right State {
-    rowData = traverseDMap (takeRowsList d) [],
-    colData = traverseDMap (takeColsList d) [],
-    board = board state,
-    document = d
-}
-gameStart _ _ = Left "Game start issue"
+gameStart state d = do
+    (hints, newRowData, newColData) <- parseGameStartDocument d
+    Right State {
+        rowData = newRowData,
+        colData = newColData,
+        board = board state,
+        document = d,
+        hints = hints
+    }
+
+parseGameStartDocument :: Document -> Either String (Int,[Int],[Int])
+parseGameStartDocument d = do
+    dmap <- getDMapFromGameStart d
+    hintsTuple <- getByKeyFromGameStart dmap "number_of_hints"
+    hints <- extractHintNumber hintsTuple 
+    rowsList <- getByKeyFromGameStart dmap "occupied_rows"
+    colsList <- getByKeyFromGameStart dmap "occupied_cols"
+    rowData <- traverseDMap (rowsList) []
+    colData <- traverseDMap (colsList) []
+    isNumberOfRowsGood <- validateDataQuantity rowData "occupied_rows"
+    isNumberOfColsGood <- validateDataQuantity rowData "occupied_cols"
+    return (hints, rowData, colData)
+
+validateDataQuantity :: [Int] -> String -> Either String String
+validateDataQuantity l str = 
+    if length l /= 10 
+        then Left ("there must be 10 values in the " ++ str ++ " element")
+        else Right "number is good"
 
 -- IMPLEMENT
 -- Adds hint data to the game state
 -- Errors are reported via Either but not error 
 hint :: State -> Document -> Either String State
-hint state (DMap [(_, DList l)]) = Right State {
-    rowData = rowData state,
-    colData = colData state,
-    document = document state,
-    board = toggleShipHint (board state) (getCoord l [])
-}
-hint _ _ = Left "hint issue"
+hint state d = do 
+    coords <- parseHintDocument d (hints state)
+    Right State {
+        rowData = rowData state,
+        colData = colData state,
+        document = document state,
+        board = toggleShipHint (board state) coords,
+        hints = hints state
+    }
+
+parseHintDocument :: Document -> Int -> Either String [(Int, Int)]
+parseHintDocument (DMap [(key, DList l)]) hints = do
+    isKeyGood <- checkKey key "coords"
+    coords <- getCoord l []
+    if length coords > hints then Left "Wrong quantity of hints returned" else Right coords
+parseHintDocument _ _ = Left "DMap [\"coords\", DList l] expected"
 
 
 -- hint state (DMap (([], (DList [])):_:_)) = Right state
