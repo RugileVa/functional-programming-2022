@@ -1,12 +1,13 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# OPTIONS_GHC -Wno-name-shadowing #-}
+{-# OPTIONS_GHC -Wno-unused-matches #-}
 module Lib2(renderDocument, hint, gameStart) where
 
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DNull, DString), Check (coords), Coord (col, row) )
 import Lib1 (State(..), getCoord, toggleShipHint, extractHintNumber, getDMapFromGameStart, getByKeyFromGameStart, traverseDMap, checkKey)
-import Data.Yaml (YamlMark(yamlColumn))
-import Data.Aeson (JSONKeyOptions(keyModifier))
 
 coordsToDMap :: Coord -> Document
 coordsToDMap coord = DMap [("col", DInteger (col coord)), ("row", DInteger (row coord))]
@@ -44,7 +45,7 @@ gameStart state d = do
         colData = newColData,
         board = board state,
         document = d,
-        hints = hints
+        hint_number = hints
     }
 
 parseGameStartDocument :: Document -> Either String (Int,[Int],[Int])
@@ -52,12 +53,12 @@ parseGameStartDocument d = do
     dmap <- getDMapFromGameStart d
     hintsTuple <- getByKeyFromGameStart dmap "number_of_hints"
     hints <- extractHintNumber hintsTuple 
-    rowsList <- getByKeyFromGameStart dmap "occupied_rows"
     colsList <- getByKeyFromGameStart dmap "occupied_cols"
-    rowData <- traverseDMap (rowsList) []
-    colData <- traverseDMap (colsList) []
+    rowsList <- getByKeyFromGameStart dmap "occupied_rows"
+    colData <- traverseDMap colsList []
+    rowData <- traverseDMap rowsList []
+    isNumberOfColsGood <- validateDataQuantity colData "occupied_cols"
     isNumberOfRowsGood <- validateDataQuantity rowData "occupied_rows"
-    isNumberOfColsGood <- validateDataQuantity rowData "occupied_cols"
     return (hints, rowData, colData)
 
 validateDataQuantity :: [Int] -> String -> Either String String
@@ -71,13 +72,13 @@ validateDataQuantity l str =
 -- Errors are reported via Either but not error 
 hint :: State -> Document -> Either String State
 hint state d = do 
-    coords <- parseHintDocument d (hints state)
+    coords <- parseHintDocument d (hint_number state)
     Right State {
         rowData = rowData state,
         colData = colData state,
         document = document state,
         board = toggleShipHint (board state) coords,
-        hints = hints state
+        hint_number = hint_number state
     }
 
 parseHintDocument :: Document -> Int -> Either String [(Int, Int)]
@@ -86,14 +87,3 @@ parseHintDocument (DMap [(key, DList l)]) hints = do
     coords <- getCoord l []
     if length coords > hints then Left "Wrong quantity of hints returned" else Right coords
 parseHintDocument _ _ = Left "DMap [\"coords\", DList l] expected"
-
-
--- hint state (DMap (([], (DList [])):_:_)) = Right state
--- hint state (DMap (([], (DList (_:_))):_:_)) = Right state
--- hint state (DMap (((_:_), (DList (_:_))):_:_)) = Right state
--- hint state (DMap (([_], (DList [])):_:_)) = Right state
--- hint state (DMap (((_:_:_), (DList [])):_:_)) = Right state
--- hint state (DMap [([], (DMap _))]) = Right state
--- hint state (DMap (([], (DMap [])):_:_)) = Right state
--- hint state (DMap (([], (DMap (_:_))):_:_)) = Right state
--- hint state (DMap [([], DInteger _)]) = Right state
