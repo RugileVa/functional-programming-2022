@@ -20,19 +20,38 @@ instance ToDocument Check
 
 -- IMPLEMENT
 -- Renders document to yaml
-renderDocument :: Document -> String
-renderDocument DNull = "null"
-renderDocument (DInteger int) = show int
-renderDocument (DList l) = "---\n" ++ concatMap convertListToYaml l
-renderDocument (DMap [(str, DList l)]) = str ++ ":" ++ concatMap mapCoordToYaml l
+renderDocument :: Document -> String 
+renderDocument d = 
+    case d of 
+        (DList x) -> "---\n" ++ unlines (toList  0 (DList x)) 
+        (DMap  x) -> "---\n" ++ unlines (mapping 0 (DMap  x)) 
+        (DInteger int) -> show int 
+        (DString str)  -> str       
+        (DNull)        -> "null"
+    where 
+        toList nestC doc = 
+            case doc of 
+            (DList []) -> []
+            (DList ((DList x) : xs)) -> ((whiteSpace nestC ++ "- ") : toList (nestC + 2) (DList x)) ++ (toList nestC (DList xs)) 
+            (DList ((DMap  x) : xs)) -> ((whiteSpace nestC ++ "- ") : mapping (nestC + 2) (DMap x)) ++ (toList nestC (DList xs))
+            (DList (x : xs))         -> (whiteSpace nestC  ++ "- " ++ convertPrimitiveToYaml x   )  : (toList nestC (DList xs)) 
+        mapping nestC doc =
+            case doc of
+            (DMap []) -> []
+            (DMap ((k, DMap v) : xs))   -> (whiteSpace nestC ++ k ++ ": ") : (mapping (nestC + 2) (DMap v) ++ mapping nestC (DMap xs))
+            (DMap ((k,  DList v) : xs)) -> (whiteSpace nestC ++ k ++ ": ") : (toList (nestC + 2) (DList v) ++ mapping nestC (DMap xs))
+            (DMap ((k, v) : xs))        -> (whiteSpace nestC ++ k ++ ": " ++ convertPrimitiveToYaml v)     : (mapping nestC (DMap xs))
 
-convertListToYaml :: Document -> String
-convertListToYaml (DInteger int)= "- " ++ show int ++ "\n"
-convertListToYaml (DString str)= "- " ++ str ++ "\n"
 
-mapCoordToYaml :: Document -> String
-mapCoordToYaml (DMap [(str1, DInteger int1), (str2, DInteger int2)]) =
-    "\n- " ++ str1 ++ ": " ++ show int1 ++ "\n  " ++ str2 ++ ": " ++ show int2
+whiteSpace:: Int -> String
+whiteSpace nestLevel = if nestLevel == 0 then "" else take nestLevel $ cycle " "
+
+convertPrimitiveToYaml :: Document -> String
+convertPrimitiveToYaml d = 
+    case d of 
+        (DInteger int) -> show int 
+        (DString str)  -> str       
+        (DNull)        -> "null"
 
 -- IMPLEMENT
 -- This adds game data to initial state
