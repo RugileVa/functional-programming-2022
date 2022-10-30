@@ -32,8 +32,8 @@ renderDocument d =
         toList nestC doc = 
             case doc of 
             (DList []) -> []
-            (DList ((DList x) : xs)) -> (h nestC "" "- " : toList (nestC + 2) (DList x)) ++ (toList nestC (DList xs)) 
-            (DList ((DMap  x) : xs)) -> (h nestC "" "- " : mapping (nestC + 2) (DMap x)) ++ (toList nestC (DList xs))
+            (DList ((DList x) : xs)) -> (h nestC "" "- " : toList (nestC + 2) (DList x)) ++ toList nestC (DList xs) 
+            (DList ((DMap  x) : xs)) -> (h nestC "" "- " : mapping (nestC + 2) (DMap x)) ++ toList nestC (DList xs)
             (DList (x : xs))         -> (h nestC  "" "- " ++ convertPrimitiveToYaml x   )  : (toList nestC (DList xs)) 
         mapping nestC doc =
             case doc of
