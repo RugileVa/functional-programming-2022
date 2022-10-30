@@ -18,7 +18,7 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "int" $
         renderDocument (DInteger 5) @?= "5"
     , testCase "string" $
-        renderDocument (DString "5") @?= string 
+        renderDocument (DString "5") @?= "5" 
     , testCase "list of ints" $
         renderDocument (DList [DInteger 5, DInteger 6]) @?= listOfInts
     , testCase "list of miscellaneous primitives" $
@@ -53,11 +53,6 @@ listOfInts = unlines [
       "---"
     , "- 5"
     , "- 6"
-  ]
-
-string :: String
-string = unlines [
-      "5"
   ]
 
 initialState :: State
