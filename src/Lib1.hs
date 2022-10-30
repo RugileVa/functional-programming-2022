@@ -3,18 +3,26 @@
 {-# LANGUAGE DataKinds #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
+{-# OPTIONS_GHC -Wno-unused-matches #-}
+{-# OPTIONS_GHC -Wno-missing-fields #-}
 module Lib1(
-    State(..), emptyState, gameStart, render, mkCheck, toggle, hint, getCoord, extractNumbers, toggleShipHint, toggleCell, removeNth, traverseDMap, takeColsList, takeRowsList
+    State(..), Cell(..), emptyState, gameStart, hint, extractHintNumber, render, mkCheck, toggle, getCoord, getDMapFromGameStart, getByKeyFromGameStart, extractNumbers, toggleShipHint, toggleCell, removeNth, traverseDMap, checkKey
 ) where
 
 import Types
 import Prelude
 
-data Cell =  Blank 
+data Cell =  Blank
             | Ship deriving Eq
 instance Show Cell where
     show Blank  = " "
     show Ship   = "x"
+
+gameStart :: State -> Document -> State
+gameStart state d = State {}
+
+hint :: State -> Document -> State
+hint state d = State {}
 
 -- This is a state of your game.
 -- It must contain all values you might need during a game:
@@ -25,42 +33,74 @@ data State = State {
     rowData :: [Int],
     colData :: [Int],
     document :: Document,
-    board :: [Cell]
-} deriving Show
+    board :: [Cell],
+    hint_number :: Int
+} deriving (Eq, Show)
+-- instance Eq State where
+--     state1 == state2 =
+--         rowData state1 == rowData state2 &&
+--         colData state1 == colData state2 &&
+--         document state1 == document state2 &&
+--         board state1 == board state2 &&
+--         hints state1 == hints state2
 
 -- IMPLEMENT
 -- This is very initial state of your program
 emptyState :: State
-emptyState = State {rowData = [], colData = [], board = take 100 (repeat Blank), document = DNull}
+emptyState = State {rowData = [], colData = [], board = take 100 (repeat Blank), document = DNull, hint_number = 0}
 -------------------- -------------------------------
-
-takeColsList :: Document -> Document
-takeColsList (DMap l) = dmap
-    where
-        (_, dmap) = head (drop 1 l)
-
-takeRowsList :: Document -> Document
-takeRowsList (DMap l) = dmap
-    where 
-        (_, dmap) = head (drop 2 l)
 
 append :: Int -> [Int] -> [Int]
 append a [] = [a]
 append a (x:xs) = x : append a xs
 
-traverseDMap :: Document -> [Int] -> [Int]
-traverseDMap (DMap [(_, DInteger num),(_, DNull)]) numbers  = append num numbers
-traverseDMap (DMap [(_, DInteger num),(_, dmap)]) numbers = traverseDMap dmap (append num numbers)
+getByKeyFromGameStart :: [(String, Document)] -> String -> Either String Document
+getByKeyFromGameStart [] key = Left ("Element with key \"" ++ key ++ "\" not found in gameStart document")
+getByKeyFromGameStart ((str, d):xs) key = if key == str then Right d else getByKeyFromGameStart xs key
 
--- IMPLEMENT
--- This adds game data to initial state 
-gameStart :: State -> Document -> State
-gameStart state d = State { 
-    rowData = traverseDMap (takeRowsList d) [], 
-    colData = traverseDMap (takeColsList d) [],
-    board = board state, 
-    document = d 
-}
+getDMapFromGameStart :: Document -> Either String [(String, Document)]
+getDMapFromGameStart (DMap l) = Right l
+getDMapFromGameStart _ = Left "DMap expected at gameStart"
+
+traverseDMap :: Document -> [Int] -> Either String [Int]
+traverseDMap DNull numbers = Right numbers
+traverseDMap d numbers = do
+    headTailList <- extractHeadTail d
+    num <- checkHead (head headTailList)
+    document <- checkTail (headTailList !! 1)
+    traverseDMap document (append num numbers)
+
+extractHeadTail :: Document -> Either String [(String, Document)]
+extractHeadTail (DMap l) = Right l
+extractHeadTail _ = Left "row and col info in the gameStart document must be comprised of DMaps"
+
+checkHead :: (String, Document) -> Either String Int
+checkHead (key, d) = do
+    isKeyGood <- checkKey key "head"
+    number <- checkHeadInteger d
+    return number
+
+checkTail :: (String, Document) -> Either String Document
+checkTail (key, d) = do
+    isKeyGood <- checkKey key "tail"
+    d <- checkTailDocument d
+    return d
+
+checkHeadInteger :: Document -> Either String Int
+checkHeadInteger (DInteger int) = do
+    if (int < 0) || (int > 10)
+        then Left "\"head\" element must be a DInteger with value between 0 and 10 (inclusive)"
+        else Right int
+checkHeadInteger _ = Left "\"head\" element must be an DInteger"
+
+checkTailDocument :: Document -> Either String Document
+checkTailDocument DNull = Right DNull
+checkTailDocument (DMap headTail) = Right (DMap headTail)
+checkTailDocument _ = Left "\"tail\" element must be an DMap or DNull"
+
+extractHintNumber :: Document -> Either String Int
+extractHintNumber (DInteger int) = Right int
+extractHintNumber _ = Left "DInteger expected in \"number_of_hints\""
 
 -- IMPLEMENT
 -- renders your game board
@@ -80,40 +120,40 @@ render state = do
         rowNumBoard = [(plainBoard !! x) ++ " " ++ show (rowData state !! x) ++ "\n------------------------------------------\n" | x <- [0..9]]
         firstLn     = take 10 $ board state
         secondLn    = take 10 $ drop 10 (board state)
-        thirdLn     = take 10 $ drop 20 (board state) 
+        thirdLn     = take 10 $ drop 20 (board state)
         fourthLn    = take 10 $ drop 30 (board state)
-        fifthLn     = take 10 $ drop 40 (board state) 
+        fifthLn     = take 10 $ drop 40 (board state)
         sixthLn     = take 10 $ drop 50 (board state)
         seventhLn   = take 10 $ drop 60 (board state)
         eighthLn    = take 10 $ drop 70 (board state)
-        ninthLn     = take 10 $ drop 80 (board state) 
-        tenthLn     = take 10 $ drop 90 (board state) 
+        ninthLn     = take 10 $ drop 80 (board state)
+        tenthLn     = take 10 $ drop 90 (board state)
 
 -- IMPLEMENT
 -- Make check from current state
-positions :: (a -> Bool) -> [a] -> [Int] 
+positions :: (a -> Bool) -> [a] -> [Int]
 positions p l = positionsIndex 0 p l
      where
-     positionsIndex :: Int -> (a -> Bool) -> [a] -> [Int] 
+     positionsIndex :: Int -> (a -> Bool) -> [a] -> [Int]
      positionsIndex _ _ []     = []
      positionsIndex index p (x:xs) = if p x then index : positionsIndex (index + 1) p xs else positionsIndex (index + 1) p xs
 
 predicate :: Cell -> Bool
-predicate c = c == Ship 
+predicate c = c == Ship
 
 findXfrom1Dto2D :: Int -> Int
-findXfrom1Dto2D d = mod d 10 
-     
+findXfrom1Dto2D d = mod d 10
+
 findYfrom1Dto2D :: Int-> Int
-findYfrom1Dto2D d = div d 10 
+findYfrom1Dto2D d = div d 10
 
 newListXY :: [Cell] -> [(Int,Int)]
-newListXY l = zip li1 li2 
+newListXY l = zip li1 li2
      where li' = positions predicate l
            li1 = map findXfrom1Dto2D li'
            li2 = map findYfrom1Dto2D li'
 
-toCoord :: [(Int, Int)] -> [Coord] 
+toCoord :: [(Int, Int)] -> [Coord]
 toCoord [] = []
 toCoord ((x,y):sd) = Coord x y : toCoord sd
 
@@ -124,7 +164,7 @@ mkCheck state = Check (toCoord (newListXY (board state)) )
 -- Removes the Nth item (index being N-1) from a list
 removeNth :: Int -> [a] -> ([a], [a])
 removeNth index lst = (left, right)
-    where 
+    where
         (left, ys) = splitAt (index - 1) lst
         right = drop 1 ys
 
@@ -137,30 +177,33 @@ toggleCell board piece n = xs ++ [piece] ++ ys
 -- Toggle state's value
 -- Receive raw user input tokens
 toggle :: State -> [String] -> State
-toggle state pos = state { rowData = rowData state, colData = colData state, board = newBoard, document = document state} 
-    where 
+toggle state pos = state { rowData = rowData state, colData = colData state, board = newBoard, document = document state}
+    where
         newCellType = if board state !! ((read (head pos) - 1) + (read (pos !! 1) - 1) * 10) == Blank then Ship else Blank
         newBoard = toggleCell (board state) newCellType (read (head pos) + (read (pos !! 1) - 1) * 10)
 
 toggleShipHint :: [Cell] -> [(Int, Int)] -> [Cell]
 toggleShipHint board [] = board
 toggleShipHint board ((x, y):xs) = toggleShipHint newBoard xs
-    where 
+    where
         newBoard = toggleCell board Ship (x + 1 + y * 10)
 
--- IMPLEMENT
--- Adds hint data to the game state
-hint :: State -> Document -> State
-hint state (DMap [(_, DList l)]) = State {
-    rowData = rowData state, 
-    colData = colData state, 
-    document = document state, 
-    board = toggleShipHint (board state) (getCoord l [])
-}
 
-getCoord :: [Document] -> [(Int, Int)] -> [(Int, Int)]
-getCoord [] coords = coords
-getCoord (dmap:xs) coords = getCoord xs (extractNumbers dmap : coords)
+getCoord :: [Document] -> [(Int, Int)] -> Either String [(Int, Int)]
+getCoord [] coords = Right coords
+getCoord (dmap:xs) coords = do
+    numbers <- extractNumbers dmap
+    getCoord xs (numbers : coords)
 
-extractNumbers :: Document -> (Int, Int)
-extractNumbers (DMap [(_,DInteger x),(_,DInteger y)]) = (x, y)
+
+extractNumbers :: Document -> Either String (Int, Int)
+extractNumbers (DMap [(colKey,DInteger x),(rowKey,DInteger y)]) = do
+    isColKeyGood <- checkKey colKey "col"
+    isRowKeyGood <- checkKey rowKey "row"
+
+    if (x > 9) || (x < 0) || (y > 9) || (y < 0)
+        then Left "integer is out of bounds"
+        else Right (x, y)
+
+checkKey :: String -> String -> Either String String
+checkKey key expected = if key /= expected then Left "wrong key" else Right "good key"

@@ -3,6 +3,7 @@ import Test.Tasty.HUnit
 
 import Lib2 (renderDocument, gameStart, hint)
 import Types (Document(..))
+import Lib1 (State(..), Cell(..))
 
 main :: IO ()
 main = defaultMain (testGroup "Tests" [
@@ -59,8 +60,91 @@ string = unlines [
       "5"
   ]
 
+initialState :: State
+initialState = State {
+  rowData = [],
+  colData = [],
+  document = DNull,
+  board = take 100 (repeat Blank),
+  hint_number = 3
+}
+
+finalGameStartState :: State
+finalGameStartState = State {
+  rowData = [2,0,2,2,2,0,6,0,3,3],
+  colData = [1,1,2,3,1,4,2,4,2,0],
+  document = DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720-e0e7-47e7-be5c-a94d32e1088d")],
+  board = take 100 (repeat Blank),
+  hint_number = 10
+}
+
+finalHintState :: State
+finalHintState = State {
+  rowData = [],
+  colData = [],
+  document = DNull,
+  board = [Ship] ++ take 99 (repeat Blank),
+  hint_number = 3
+}
+
+getLeft :: Either String b -> String
+getLeft (Left a) = a
+getLeft (Right _) = "Expected Left"
+
+getRight :: Either String b -> b
+getRight (Right a) = a
+getRight _ = error "No Right value provided"
+
 gameStartTests :: TestTree
-gameStartTests = testGroup "Test start document" []
+gameStartTests = testGroup "Test start document"
+  [   testCase "not dmap provided" $
+        getLeft (gameStart initialState (DList [DInteger 1])) @?= "DMap expected at gameStart"
+    , testCase "no \"number_of_hints\"" $
+        getLeft (gameStart initialState (DMap [("occupied_cols", DNull), ("occupied_rows", DNull)])) @?= "Element with key \"number_of_hints\" not found in gameStart document"
+    , testCase "no DInteger in number of hints" $
+        getLeft (gameStart initialState (DMap [("number_of_hints", DString "test")])) @?= "DInteger expected in \"number_of_hints\""
+    , testCase "no \"occupied_cols\"" $
+        getLeft (gameStart initialState (DMap [("number_of_hints", DInteger 10), ("occupied_rows", DNull)])) @?= "Element with key \"occupied_cols\" not found in gameStart document"
+    , testCase "no \"occupied_rows\"" $
+        getLeft (gameStart initialState (DMap [("number_of_hints", DInteger 10), ("occupied_cols", DNull)])) @?= "Element with key \"occupied_rows\" not found in gameStart document"
+    , testCase "no DMap for headTail" $
+        getLeft (gameStart initialState (DMap [("number_of_hints",DInteger 10),("occupied_cols",DList [DInteger 1]), ("occupied_rows",DList [DInteger 1])])) @?= "row and col info in the gameStart document must be comprised of DMaps"
+    , testCase "wrong \"head\" key" $
+        getLeft (gameStart initialState (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("not_head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DNull)])])]), ("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DNull)])])])])) @?= "wrong key"
+    , testCase "\"head\" is not DInteger" $
+        getLeft (gameStart initialState (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DString "test"),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DNull)])])]), ("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DNull)])])])])) @?= "\"head\" element must be an DInteger"
+    , testCase "\"head\" integer is more than 10" $
+        getLeft (gameStart initialState (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 11),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DNull)])])]), ("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DNull)])])])])) @?= "\"head\" element must be a DInteger with value between 0 and 10 (inclusive)"
+    , testCase "wrong \"tail\" key" $
+        getLeft (gameStart initialState (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("not_tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DNull)])])]), ("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DNull)])])])])) @?= "wrong key"
+    , testCase "\"tail\" is not DMap or DNull" $
+        getLeft (gameStart initialState (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail", DString "test")])]), ("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DNull)])])])])) @?= "\"tail\" element must be an DMap or DNull"
+    , testCase "too few col numbers" $
+        getLeft (gameStart initialState (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DNull)])])]), ("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DNull)])])])])) @?= "there must be 10 values in the occupied_cols element"
+    , testCase "too few row numbers" $
+        getLeft (gameStart initialState (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]), ("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DNull)])])])])) @?= "there must be 10 values in the occupied_rows element"
+    , testCase "everything works in gameStart" $
+        getRight (gameStart initialState (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720-e0e7-47e7-be5c-a94d32e1088d")])) @?= finalGameStartState
+ 
+  ]
+
+-- DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DNull)])])]), ("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap)])])])]
 
 hintTests :: TestTree
-hintTests = testGroup "Test hint document" []
+hintTests = testGroup "Test hint document" 
+  [   
+      testCase "key is not \"coords\"" $
+        getLeft (hint initialState (DMap [("not_coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)]])])) @?= "wrong key"
+    , testCase "key is not \"col\"" $
+        getLeft (hint initialState (DMap [("coords",DList [DMap [("not_col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)]])])) @?= "wrong key"
+    , testCase "key is not \"row\"" $
+        getLeft (hint initialState (DMap [("coords",DList [DMap [("col",DInteger 8),("not_row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)]])])) @?= "wrong key"
+    , testCase "integer is out of bounds" $
+        getLeft (hint initialState (DMap [("coords",DList [DMap [("col",DInteger 11),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)]])])) @?= "integer is out of bounds"
+    , testCase "too many hints" $
+        getLeft (hint initialState (DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)],DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)]])])) @?= "Wrong quantity of hints returned"
+    , testCase "everything works in hint" $
+        getRight (hint initialState (DMap [("coords",DList [DMap [("col",DInteger 0),("row",DInteger 0)]])])) @?= finalHintState
+  ]
+
+-- DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)]])]
