@@ -32,19 +32,20 @@ renderDocument d =
         toList nestC doc = 
             case doc of 
             (DList []) -> []
-            (DList ((DList x) : xs)) -> ((whiteSpace nestC ++ "- ") : toList (nestC + 2) (DList x)) ++ (toList nestC (DList xs)) 
-            (DList ((DMap  x) : xs)) -> ((whiteSpace nestC ++ "- ") : mapping (nestC + 2) (DMap x)) ++ (toList nestC (DList xs))
-            (DList (x : xs))         -> (whiteSpace nestC  ++ "- " ++ convertPrimitiveToYaml x   )  : (toList nestC (DList xs)) 
+            (DList ((DList x) : xs)) -> ((h nestC "" "- ") : toList (nestC + 2) (DList x)) ++ (toList nestC (DList xs)) 
+            (DList ((DMap  x) : xs)) -> ((h nestC "" "- ") : mapping (nestC + 2) (DMap x)) ++ (toList nestC (DList xs))
+            (DList (x : xs))         -> (h nestC  "" "- " ++ convertPrimitiveToYaml x   )  : (toList nestC (DList xs)) 
         mapping nestC doc =
             case doc of
             (DMap []) -> []
-            (DMap ((k, DMap v) : xs))   -> (whiteSpace nestC ++ k ++ ": ") : (mapping (nestC + 2) (DMap v) ++ mapping nestC (DMap xs))
-            (DMap ((k,  DList v) : xs)) -> (whiteSpace nestC ++ k ++ ": ") : (toList (nestC + 2) (DList v) ++ mapping nestC (DMap xs))
-            (DMap ((k, v) : xs))        -> (whiteSpace nestC ++ k ++ ": " ++ convertPrimitiveToYaml v)     : (mapping nestC (DMap xs))
+            (DMap ((k, DMap v) : xs))   -> (h nestC k ": ") : (mapping (nestC + 2) (DMap v) ++ mapping nestC (DMap xs))
+            (DMap ((k,  DList v) : xs)) -> (h nestC k ": ") : (toList (nestC + 2) (DList v) ++ mapping nestC (DMap xs))
+            (DMap ((k, v) : xs))        -> ((h nestC k ": ") ++ convertPrimitiveToYaml v)     : (mapping nestC (DMap xs))
+        h nestC k s = (wS nestC) ++ k ++ s 
 
-
-whiteSpace:: Int -> String
-whiteSpace nestLevel = if nestLevel == 0 then "" else take nestLevel $ cycle " "
+-- whiteSpace
+wS :: Int -> String
+wS nestLevel = take nestLevel $ cycle " "
 
 convertPrimitiveToYaml :: Document -> String
 convertPrimitiveToYaml d = 

@@ -13,46 +13,220 @@ main = defaultMain (testGroup "Tests" [
 
 toYamlTests :: TestTree
 toYamlTests = testGroup "Document to yaml"
-  [   testCase "null" $
+  [   testCase "null" $                      -- primitives
         renderDocument DNull @?= "null"
     , testCase "int" $
         renderDocument (DInteger 5) @?= "5"
     , testCase "string" $
         renderDocument (DString "5") @?= "5" 
-    , testCase "list of ints" $
+    , testCase "list of ints" $              -- list and nested lists
         renderDocument (DList [DInteger 5, DInteger 6]) @?= listOfInts
     , testCase "list of miscellaneous primitives" $
-        renderDocument (DList [DInteger 5, DNull]) @?= "---\n- 5\n- null\n"
+        renderDocument (DList [DInteger 5, DString "5", DNull]) @?= listOfRandom
     , testCase "list in a list" $
-        renderDocument (DList [DList [DInteger 1 , DInteger 2], DList [DInteger 3, DInteger 4]]) @?= "---\n- \n  - 1\n  - 2\n- \n  - 3\n  - 4\n"
+        renderDocument (DList [DList [DInteger 1 , DInteger 2], DList [DInteger 3, DInteger 4, DList [DInteger 5, DInteger 5]]]) @?= listInList
+    , testCase "list in a list + primitive" $
+        renderDocument (DList [DList [DInteger 1 , DInteger 2], DNull]) @?= nestedListandPrim
     , testCase "empty list" $
         renderDocument (DList []) @?= "---\n"
     , testCase "DMap in a DList." $
-        renderDocument (DList [DMap[("key", DInteger 5), ("key2", DInteger 4)]]) @?= "---\n- \n  key: 5\n  key2: 4\n"
-    , testCase "Few DMaps in a DList. DList [DMap (\"key\", value)]" $
-        renderDocument (DList [DMap[("key", DInteger 5)], DMap[("key2", DInteger 5)]]) @?= "---\n- \n  key: 5\n- \n  key2: 5\n"
-    , testCase "Empty Dmap" $
-        renderDocument (DList []) @?= "---\n"
+        renderDocument (DList [DMap[("key", DInteger 5), ("key2", DString "4")]]) @?= oneDMapinDList
+    , testCase "Few DMaps in a DList" $
+        renderDocument (DList [DMap[("key", DInteger 5)], DMap[("key2", DString "4")]]) @?= fewDMapsinDList
+    , testCase "DList -> DMap -> DList" $
+         renderDocument (DList [DMap[("key",DList[DInteger 5])]])  @?= listmaplist
+    , testCase "Empty Dmap" $               -- Dmaps with primitives
+        renderDocument (DMap []) @?= "---\n"
     , testCase "String in DMap" $
         renderDocument (DMap [("key", DString "5")]) @?= "---\nkey: 5\n"
     , testCase "Integer in DMap" $
         renderDocument (DMap [("key", DInteger 5)]) @?= "---\nkey: 5\n"
     , testCase "null in DMap" $
         renderDocument (DMap [("key", DNull)]) @?= "---\nkey: null\n"
-    , testCase "DList in DMap" $
+    , testCase "primitives/more than one mapping in DMap" $
+        renderDocument (DMap [("key1", DInteger 5), ("key2", DString "5"), ("key3", DNull)]) @?= aFewMappings
+    , testCase "DMap -> DList" $           -- DMaps with DLists 
         renderDocument (DMap [("key", DList[DInteger 5])]) @?= "---\nkey: \n  - 5\n"
-    , testCase "DMap in DMap" $
-        renderDocument (DMap [("key1", DMap[("key2", DList[DInteger 5])])]) @?= "---\nkey1: \n  key2: \n    - 5\n"
+    , testCase "DMap -> DList -> DMap" $           
+        renderDocument (DMap [("KEY", DList[DMap[("key1", DNull), ("key2", DNull), ("key3", DList[DInteger 1, DInteger 2])]])]) @?= maplistmap
+    , testCase "Simple DMap -> DMap" $            -- DMaps with DMaps
+        renderDocument (DMap [("key1", DMap[("key2", DNull)])]) @?= "---\nkey1: \n  key2: null\n"
+     , testCase "Complicated DMap -> DMap" $            
+        renderDocument (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720-e0e7-47e7-be5c-a94d32e1088d")]) @?= cmp
+    , testCase "Coords Dmap" $            
+        renderDocument (DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)],DMap [("col",DInteger 6),("row",DInteger 6)],DMap [("col",DInteger 5),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 4)],DMap [("col",DInteger 7),("row",DInteger 3)],DMap [("col",DInteger 7),("row",DInteger 2)],DMap [("col",DInteger 4),("row",DInteger 9)],DMap [("col",DInteger 5),("row",DInteger 9)],DMap [("col",DInteger 6),("row",DInteger 9)]])]) @?= cmp2
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
   ]
+
 
 listOfInts :: String
 listOfInts = unlines [
       "---"
     , "- 5"
     , "- 6"
+  ]
+
+listOfRandom :: String
+listOfRandom = unlines [
+      "---"
+    , "- 5"
+    , "- 5"
+    , "- null"
+  ]
+  
+listInList :: String 
+listInList = unlines [
+     "---"
+   , "- "
+   , "  - 1"
+   , "  - 2"
+   , "- "
+   , "  - 3"
+   , "  - 4"
+   , "  - "
+   , "    - 5"
+   , "    - 5"
+  ]
+
+nestedListandPrim :: String 
+nestedListandPrim = unlines [
+    "---"
+    ,"- "
+    ,"  - 1"
+    ,"  - 2"
+    ,"- null"
+  ]
+
+oneDMapinDList :: String 
+oneDMapinDList = unlines [
+    "---" 
+   ,"- " 
+   ,"  key: 5"
+   ,"  key2: 4"
+ ]
+
+fewDMapsinDList :: String 
+fewDMapsinDList = unlines [
+    "---"
+   ,"- "
+   ,"  key: 5"
+   ,"- "
+   ,"  key2: 4"
+ ]
+
+aFewMappings :: String 
+aFewMappings  = unlines [
+   "---"
+  ,"key1: 5"
+  ,"key2: 5"
+  ,"key3: null"
+ ]
+
+listmaplist :: String 
+listmaplist = unlines [
+    "---"
+    ,"- "
+    ,"  key: "
+    ,"    - 5"
+ ] 
+
+maplistmap :: String 
+maplistmap = unlines [
+    "---"
+   ,"KEY: "
+   ,"  - "
+   ,"    key1: null"
+   ,"    key2: null"
+   ,"    key3: "
+   ,"      - 1"
+   ,"      - 2"
+ ]
+
+cmp :: String 
+cmp = unlines [
+   "---"
+   ,"number_of_hints: 10"
+   ,"occupied_cols: "
+   ,"  head: 1"
+   ,"  tail: "
+   ,"    head: 1"
+   ,"    tail: "
+   ,"      head: 2"
+   ,"      tail: "
+   ,"        head: 3"
+   ,"        tail: "
+   ,"          head: 1"
+   ,"          tail: "
+   ,"            head: 4"
+   ,"            tail: "
+   ,"              head: 2"
+   ,"              tail: "
+   ,"                head: 4"
+   ,"                tail: "
+   ,"                  head: 2"
+   ,"                  tail: "
+   ,"                    head: 0"
+   ,"                    tail: null"
+   ,"occupied_rows: "
+   ,"  head: 2"
+   ,"  tail: "
+   ,"    head: 0"
+   ,"    tail: "
+   ,"      head: 2"
+   ,"      tail: "
+   ,"        head: 2"
+   ,"        tail: "
+   ,"          head: 2"
+   ,"          tail: "
+   ,"            head: 0"
+   ,"            tail: "
+   ,"              head: 6"
+   ,"              tail: "
+   ,"                head: 0"
+   ,"                tail: "
+   ,"                  head: 3"
+   ,"                  tail: "
+   ,"                    head: 3"
+   ,"                    tail: null"
+   ,"game_setup_id: 31f1c720-e0e7-47e7-be5c-a94d32e1088d"
+  ]
+
+cmp2 :: String
+cmp2 = unlines [
+   "---"
+   ,"coords: "
+   ,"  - "
+   ,"    col: 8"
+   ,"    row: 6"
+   ,"  - "
+   ,"    col: 7"
+   ,"    row: 6"
+   ,"  - "
+   ,"    col: 6"
+   ,"    row: 6"
+   ,"  - "
+   ,"    col: 5"
+   ,"    row: 6"
+   ,"  - "
+   ,"    col: 7"
+   ,"    row: 4"
+   ,"  - "
+   ,"    col: 7"
+   ,"    row: 3"
+   ,"  - "
+   ,"    col: 7"
+   ,"    row: 2"
+   ,"  - "
+   ,"    col: 4"
+   ,"    row: 9"
+   ,"  - "
+   ,"    col: 5"
+   ,"    row: 9"
+   ,"  - "
+   ,"    col: 6"
+   ,"    row: 9"
   ]
 
 initialState :: State
