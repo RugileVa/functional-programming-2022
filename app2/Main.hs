@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
+
 
 import Control.Monad.IO.Class (MonadIO (liftIO))
 import Control.Monad.Trans.Class(lift)
