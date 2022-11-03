@@ -28,7 +28,7 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "list in a list + primitive" $
         renderDocument (DList [DList [DInteger 1 , DInteger 2], DNull]) @?= nestedListandPrim
     , testCase "empty list" $
-        renderDocument (DList []) @?= "---\n"
+        renderDocument (DList []) @?= "---\n[]"
     , testCase "DMap in a DList." $
         renderDocument (DList [DMap[("key", DInteger 5), ("key2", DString "4")]]) @?= oneDMapinDList
     , testCase "Few DMaps in a DList" $
@@ -36,7 +36,7 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "DList -> DMap -> DList" $
          renderDocument (DList [DMap[("key",DList[DInteger 5])]])  @?= listmaplist
     , testCase "Empty Dmap" $               -- Dmaps with primitives
-        renderDocument (DMap []) @?= "---\n"
+        renderDocument (DMap []) @?= "---\n[]"
     , testCase "String in DMap" $
         renderDocument (DMap [("key", DString "5")]) @?= "---\nkey: 5\n"
     , testCase "Integer in DMap" $
@@ -55,11 +55,52 @@ toYamlTests = testGroup "Document to yaml"
         renderDocument (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720-e0e7-47e7-be5c-a94d32e1088d")]) @?= cmp
     , testCase "Coords Dmap" $            
         renderDocument (DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)],DMap [("col",DInteger 6),("row",DInteger 6)],DMap [("col",DInteger 5),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 4)],DMap [("col",DInteger 7),("row",DInteger 3)],DMap [("col",DInteger 7),("row",DInteger 2)],DMap [("col",DInteger 4),("row",DInteger 9)],DMap [("col",DInteger 5),("row",DInteger 9)],DMap [("col",DInteger 6),("row",DInteger 9)]])]) @?= cmp2
+    , testCase "Tricky case" $          
+        renderDocument trickyCaseDocument @?= trickyCaseString
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
   ]
 
+trickyCaseDocument :: Document
+trickyCaseDocument =
+ DMap [
+    ("key1", DMap [
+        ("key2", DList [
+            DInteger 1,
+            DMap [
+                ("key3", DList [
+                    DInteger 1,
+                    DInteger 3,
+                    DNull,
+                    DMap [("", DNull)],
+                    DMap []
+                ]),
+                ("key4", DString "")],
+            DNull
+        ])
+    ]),
+    ("key5", DList [])
+ ]
+
+trickyCaseString :: String
+trickyCaseString = unlines [
+   "---",
+   "key1: ",
+   "  key2: ",
+   "    - 1",
+   "    - ",
+   "      key3: ",
+   "        - 1",
+   "        - 3",
+   "        - null",
+   "        - ",
+   "          '': null",
+   "        - []",
+   "      key4: ''",  
+   "    - null",
+   "key5: []"
+ ]
 
 listOfInts :: String
 listOfInts = unlines [
