@@ -7,7 +7,7 @@
 module Lib2(renderDocument, hint, gameStart) where
 
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DNull, DString), Check (coords), Coord (col, row) )
-import Lib1 (State(..), getCoord, toggleShipHint, extractHintNumber, getDMapFromGameStart, getByKeyFromGameStart, traverseDMap, checkKey)
+import Lib1 (append, toggleShipHint, Cell (Blank), State (..))
 
 coordsToDMap :: Coord -> Document
 coordsToDMap coord = DMap [("col", DInteger (col coord)), ("row", DInteger (row coord))]
@@ -17,6 +17,9 @@ coordsToDMap coord = DMap [("col", DInteger (col coord)), ("row", DInteger (row 
 instance ToDocument Check
     where
     toDocument l = DMap [("coords", DList (map coordsToDMap (coords l)))]
+
+emptyState :: State
+emptyState = State {rowData = [], colData = [], board = take 100 (repeat Blank), document = DNull, hint_number = 0}
 
 -- IMPLEMENT
 -- Renders document to yaml
@@ -106,3 +109,69 @@ parseHintDocument (DMap [(key, DList l)]) hints = do
     coords <- getCoord l []
     if length coords > hints then Left "Wrong quantity of hints returned" else Right coords
 parseHintDocument _ _ = Left "DMap [\"coords\", DList l] expected"
+
+getByKeyFromGameStart :: [(String, Document)] -> String -> Either String Document
+getByKeyFromGameStart [] key = Left ("Element with key \"" ++ key ++ "\" not found in gameStart document")
+getByKeyFromGameStart ((str, d):xs) key = if key == str then Right d else getByKeyFromGameStart xs key
+
+getDMapFromGameStart :: Document -> Either String [(String, Document)]
+getDMapFromGameStart (DMap l) = Right l
+getDMapFromGameStart _ = Left "DMap expected at gameStart"
+
+traverseDMap :: Document -> [Int] -> Either String [Int]
+traverseDMap DNull numbers = Right numbers
+traverseDMap d numbers = do
+    headTailList <- extractHeadTail d
+    num <- checkHead (head headTailList)
+    document <- checkTail (headTailList !! 1)
+    traverseDMap document (append num numbers)
+
+extractHeadTail :: Document -> Either String [(String, Document)]
+extractHeadTail (DMap l) = Right l
+extractHeadTail _ = Left "row and col info in the gameStart document must be comprised of DMaps"
+
+checkHead :: (String, Document) -> Either String Int
+checkHead (key, d) = do
+    isKeyGood <- checkKey key "head"
+    number <- checkHeadInteger d
+    return number
+
+checkTail :: (String, Document) -> Either String Document
+checkTail (key, d) = do
+    isKeyGood <- checkKey key "tail"
+    d <- checkTailDocument d
+    return d
+
+checkHeadInteger :: Document -> Either String Int
+checkHeadInteger (DInteger int) = do
+    if (int < 0) || (int > 10)
+        then Left "\"head\" element must be a DInteger with value between 0 and 10 (inclusive)"
+        else Right int
+checkHeadInteger _ = Left "\"head\" element must be an DInteger"
+
+checkTailDocument :: Document -> Either String Document
+checkTailDocument DNull = Right DNull
+checkTailDocument (DMap headTail) = Right (DMap headTail)
+checkTailDocument _ = Left "\"tail\" element must be an DMap or DNull"
+
+extractHintNumber :: Document -> Either String Int
+extractHintNumber (DInteger int) = Right int
+extractHintNumber _ = Left "DInteger expected in \"number_of_hints\""
+
+checkKey :: String -> String -> Either String String
+checkKey key expected = if key /= expected then Left "wrong key" else Right "good key"
+
+getCoord :: [Document] -> [(Int, Int)] -> Either String [(Int, Int)]
+getCoord [] coords = Right coords
+getCoord (dmap:xs) coords = do
+    numbers <- extractNumbers dmap
+    getCoord xs (numbers : coords)
+
+extractNumbers :: Document -> Either String (Int, Int)
+extractNumbers (DMap [(colKey,DInteger x),(rowKey,DInteger y)]) = do
+    isColKeyGood <- checkKey colKey "col"
+    isRowKeyGood <- checkKey rowKey "row"
+
+    if (x > 9) || (x < 0) || (y > 9) || (y < 0)
+        then Left "integer is out of bounds"
+        else Right (x, y)
