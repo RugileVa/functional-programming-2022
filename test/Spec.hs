@@ -76,7 +76,7 @@ fromYamlTests = testGroup "Document from yaml"
   ]
 
 oneDMapinDList' :: String 
-oneDMapinDList = unlines [
+oneDMapinDList' = unlines [
     "---" 
    ,"- " 
    ,"  key: 5"
@@ -84,7 +84,7 @@ oneDMapinDList = unlines [
  ]
 
 fewDMapsinDList' :: String 
-fewDMapsinDList = unlines [
+fewDMapsinDList' = unlines [
     "---"
    ,"- "
    ,"  key: 5"
@@ -93,7 +93,7 @@ fewDMapsinDList = unlines [
  ]
 
 aFewMappings' :: String 
-aFewMappings  = unlines [
+aFewMappings'  = unlines [
    "---"
   ,"key: 5"
   ,"key: \"5\""
@@ -101,7 +101,7 @@ aFewMappings  = unlines [
  ]
 
 maplistmap' :: String 
-maplistmap = unlines [
+maplistmap' = unlines [
     "---"
    ,"KEY: "
    ,"  - "
@@ -112,8 +112,8 @@ maplistmap = unlines [
    ,"      - 2"
  ]
 
-cmp :: String 
-cmp = unlines [
+cmp' :: String 
+cmp' = unlines [
    "---"
    ,"number_of_hints: 10"
    ,"occupied_cols: "
