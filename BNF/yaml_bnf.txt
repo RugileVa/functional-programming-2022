@@ -1,0 +1,46 @@
+<lowercase-letter> ::=   
+                       'a' | 'b' | 'c' | 'd' |'e' | 'f' | 'g' | 'h'| 'i' | 'j' | 'k' | 'l'
+		             | 'm' | 'n' | 'o' | 'p'| 'q' | 'r' | 's' | 't'| 'u' | 'v' | 'w' | 'x'
+		             | 'y' | 'z' 
+
+<uppercase-letter> ::= 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' 
+		             | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P' 
+		             | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' 
+		             | 'Y' | 'Z' 
+
+<letter>     ::=  <lowercase-letter> | <uppercase-letter>
+
+<ws> ::= ' '
+
+<new-line>   ::= '\n'
+
+<character> ::= <letter> | <digit> | <whitespace> | '_'
+
+<digit>         ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
+<natural-number>::=  <digit> | <natural-number> <digit>  
+<integer>       ::=  '(' '-' <natural-number> ')' | <natural-number>
+<string>        ::= '"' <character> <string> '"'| "'" "'"
+<null>          ::= 'null' 
+
+<primitive>     ::= <integer> | <string> | <null>
+
+<empty-list> 	::= '[' ']'
+<empty-map>     ::= '{' '}'
+
+<list>		        ::= <list-elem><list>
+<list-item>         ::= <primitive> | <map> | <empty-list> | <empty-map> 
+<list-elem>         ::= <new-line> [<ws>*] '-' ' ' [<ws>*] <list-item> [ws*] | <nested-list-elem>
+<nested-list-elem>  ::= <new-line> [<ws>*] '-' ' ' <list-elem>+
+
+<key>             ::= <letter><key> | "'" "'"
+
+<map>		      ::= <map-elem><map>
+<map-item>        ::= <primitive> | <list> | <empty-list> | <empty-map>
+<map-elem>        ::= <new-line> [<ws>*] <key> ':' ' ' [<ws>*] <map-item> [<ws>*] | <nested-map-elem>
+<nested-map-elem> ::=  <new-line> [<ws>*] <key> ':' ' '<map-elem>+
+
+<starter> 	::= '---'
+
+<data-types> :: <primitives> | <map> | <list>
+
+<doc>        ::= <starter> <data-types> | <primitives>

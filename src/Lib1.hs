@@ -51,11 +51,11 @@ traverseDMap (DMap [(_, DInteger num),(_, dmap)]) numbers = traverseDMap dmap (a
 takeColsList :: Document -> Document
 takeColsList (DMap l) = dmap
     where
-        (str, dmap) = head (drop 1 l)
+        (_, dmap) = head (drop 1 l)
 takeRowsList :: Document -> Document
 takeRowsList (DMap l) = dmap
     where 
-        (str, dmap) = head (drop 2 l)
+        (_, dmap) = head (drop 2 l)
 
 append :: Int -> [Int] -> [Int]
 append a [] = [a]
