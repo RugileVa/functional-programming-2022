@@ -1,9 +1,13 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Lib3 (parseDocument, hint, gameStart, parseDocument, GameStart, Hint) where
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
+{-# OPTIONS_GHC -Wno-unused-do-bind #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
+module Lib3 (parseDocument, hint, gameStart, parseDocument, GameStart, Hint) where
+import Lib2 (parseGameStartDocument, checkKey, getCoord, toggleShipHint)
 import Types ( Document(..), FromDocument, fromDocument )
-import Lib1 (State(..))
+import Lib1 (State(..), Cell(..))
 import Control.Applicative
 import Data.Char
 
@@ -222,21 +226,62 @@ parseDoc =  do
 -- IMPLEMENT
 -- Change right hand side as you wish
 -- You will have to create an instance of FromDocument
-data GameStart = GameStart deriving Show
+data GameStart = GameStart {
+    hint_number :: Int,
+    occupied_rows :: [Int],
+    occupied_cols :: [Int]
+} deriving Show
+
+instance FromDocument GameStart where
+    fromDocument d = do
+        (hints, rowData, colData) <- parseGameStartDocument d
+        Right GameStart {
+            Lib3.hint_number = hints,
+            occupied_rows = rowData,
+            occupied_cols = colData
+        }
 
 -- This adds game data to initial state
 -- Errors are not reported since GameStart is already totally valid adt
 -- containing all fields needed
 gameStart :: State -> GameStart -> State
-gameStart (State l) d = State $ ("Game started: " ++ show d) : l
+gameStart state gs = State {
+    rowData = occupied_rows gs,
+    colData = occupied_cols gs,
+    document = DInteger 1,
+    board = replicate 100 Blank,
+    Lib1.hint_number = Lib3.hint_number gs
+}
 
 -- IMPLEMENT
 -- Change right hand side as you wish
 -- You will have to create an instance of FromDocument
-data Hint = Hint deriving Show
+data Hint = Hint {
+    coords :: [(Int, Int)]
+} deriving Show
+
+instance FromDocument Hint where
+    fromDocument doc = do
+        coords <- parseHintDocument doc
+        Right Hint {
+            coords = coords
+        }
+    
+parseHintDocument :: Document -> Either String [(Int, Int)]
+parseHintDocument (DMap [(key, DList l)]) = do
+    isKeyGood <- checkKey key "coords"
+    coords <- getCoord l []
+    return coords
+parseHintDocument _ = Left "DMap [\"coords\", DList l] expected"
 
 -- Adds hint data to the game state
 -- Errors are not reported since GameStart is already totally valid adt
 -- containing all fields needed
 hint :: State -> Hint -> State
-hint (State l) h = State $ ("Hint " ++ show h) : l
+hint state h = State {
+    rowData = rowData state, 
+    colData = colData state, 
+    document = document state, 
+    board = toggleShipHint (board state) (coords h),
+    Lib1.hint_number = Lib1.hint_number state
+}
