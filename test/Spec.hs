@@ -168,7 +168,7 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "int" $
         renderDocument (DInteger 5) @?= "5"
     , testCase "string" $
-        renderDocument (DString "5") @?= "5" 
+        renderDocument (DString "5") @?= "\"5\"" 
     , testCase "list of ints" $              -- list and nested lists
         renderDocument (DList [DInteger 5, DInteger 6]) @?= listOfInts
     , testCase "list of miscellaneous primitives" $
@@ -381,7 +381,7 @@ cmp = unlines [
    ,"                  tail: "
    ,"                    head: 3"
    ,"                    tail: null"
-   ,"game_setup_id: 31f1c720-e0e7-47e7-be5c-a94d32e1088d"
+   ,"game_setup_id: \"31f1c720-e0e7-47e7-be5c-a94d32e1088d\""
   ]
 
 cmp2 :: String

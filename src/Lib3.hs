@@ -107,7 +107,7 @@ stringLiteralParser = Parser $ \input ->
         _    -> Left $ "Unexpected string literal " ++ x 
     where 
         myPredicate :: Char -> Bool
-        myPredicate c = isAlphaNum c || c == ' '
+        myPredicate c = isAlphaNum c || c == ' ' || c == '_'
 
 stringInQParser :: Parser String 
 stringInQParser = do 
@@ -204,7 +204,7 @@ keyParser s = Parser $ \input ->
         _    -> Left $ "Unexpected literal in key " ++ x 
     where 
         myPredicate :: Char -> Bool
-        myPredicate c = isAlphaNum c || c == '_'
+        myPredicate c = isAlphaNum c || c == '_' || c == '-'
 
 keyParserEmpty :: Int -> Parser String 
 keyParserEmpty s = do
@@ -222,6 +222,7 @@ parseDoc =  do
     sp <- starterParser
     doc <- dPrimitiveValue <|> listParser 0 <|> dMapParser 0
     return (doc)
+    <|> dPrimitiveValue
 
 -- IMPLEMENT
 -- Change right hand side as you wish
