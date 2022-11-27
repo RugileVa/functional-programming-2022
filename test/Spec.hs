@@ -45,7 +45,7 @@ fromYamlTests = testGroup "Document from yaml"
     , testCase "int" $
         parseDocument "5" @?= Right (DInteger 5)
     , testCase "string" $
-        parseDocument "5" @?= Right (DString "5") 
+        parseDocument "\"5\"" @?= Right (DString "5") 
     , testCase "list of ints" $              
         parseDocument listOfInts @?= Right (DList [DInteger 5, DInteger 6])
     , testCase "list of miscellaneous primitives" $
