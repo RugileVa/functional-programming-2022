@@ -4,8 +4,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# OPTIONS_GHC -Wno-name-shadowing #-}
 {-# OPTIONS_GHC -Wno-unused-matches #-}
-module Lib2(renderDocument, hint, gameStart) where
-
+module Lib2(renderDocument, hint, gameStart, parseGameStartDocument, parseHintDocument, checkKey, getCoord, toggleShipHint) where
 import Types ( ToDocument(..), Document (DMap, DList, DInteger, DNull, DString), Check (coords), Coord (col, row) )
 import Lib1 (append, toggleShipHint, Cell (Blank), State (..))
 
