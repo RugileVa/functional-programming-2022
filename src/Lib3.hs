@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
-module Lib3 (parseDocument, hint, gameStart, parseDocument, GameStart, Hint) where
+module Lib3 (parseDocument, hint, gameStart, GameStart, Hint) where
 import Lib2 (parseGameStartDocument, checkKey, getCoord, toggleShipHint)
 import Types ( Document(..), FromDocument, fromDocument )
 import Lib1 (State(..), Cell(..))
@@ -13,7 +13,7 @@ import Data.Char
 
 -- IMPLEMENT
 -- Parses a document from yaml
-parseDocument :: String -> Either String Document
+parseDocument :: String -> Either String Document 
 parseDocument str = fst <$> runParser parseDoc str
 
 newtype Parser a = Parser { runParser :: String -> Either String (a, String) }
@@ -65,8 +65,8 @@ charParser :: Char -> Parser Char
 charParser c = Parser $ \input -> 
     case input of 
         (h:rest) | h == c      -> Right (h, rest)
-        (input)  | input == "" -> Left   "Unexcpected end of input. charParser"
-        (h:rest)               -> Left $ "Unexpected " ++ convert [h] ++ ", expected " ++ [c] 
+        x        | x == ""     -> Left   "Unexcpected end of input. charParser"
+        (h:_)                  -> Left $ "Unexpected " ++ convert [h] ++ ", expected " ++ [c] 
         where convert h = if h == " " then "' '" else h
             
 stringParser :: String -> Parser String
@@ -85,15 +85,17 @@ natParser = Parser $ \input ->
 
 intParser :: Parser Int 
 intParser = do 
+    charParser '('
     charParser '-'
     n <- natParser
+    charParser ')'
     return (-n)
     <|> natParser
 
 spaceParser :: Parser String 
 spaceParser = do 
-    res <- (many $ charParser ' ')
-    return (res)
+    res <- many $ charParser ' '
+    return res
 
 -- digits, ws, letters
 stringLiteralParser :: Parser String 
@@ -107,7 +109,7 @@ stringLiteralParser = Parser $ \input ->
         _    -> Left $ "Unexpected string literal " ++ x 
     where 
         myPredicate :: Char -> Bool
-        myPredicate c = isAlphaNum c || c == ' ' || c == '_'
+        myPredicate c = isAlphaNum c || c == ' ' || c == '_' || c == '-'
 
 stringInQParser :: Parser String 
 stringInQParser = do 
@@ -126,8 +128,13 @@ dNull = (\_ -> DNull) <$> stringParser "null"
 dString :: Parser Document 
 dString = DString <$> stringInQParser
 
+emptydString :: Parser Document 
+emptydString = do
+    stringParser "''"
+    return $ DString ("''")
+
 dPrimitiveValue :: Parser Document
-dPrimitiveValue = dInteger <|> dNull <|> dString
+dPrimitiveValue = dInteger <|> dNull <|> dString <|> emptydString
 
 listElemParser :: Int -> Parser Document
 listElemParser s = do
@@ -135,9 +142,9 @@ listElemParser s = do
     stringParser (take s $ cycle " ")  
     stringParser "- "
     spaceParser 
-    doc <- dPrimitiveValue <|> emptyMapParser <|> dMapParser (s+2)
+    doc <- dPrimitiveValue <|> emptyMapP <|> dMapParser (s+2) <|> emptyListParser
     spaceParser
-    return $ (doc)
+    return doc
     <|> listInListParser (s+2)
 
 listInListParser :: Int -> Parser Document 
@@ -151,31 +158,31 @@ listInListParser s = do
 listParser :: Int -> Parser Document
 listParser s = do
     doc <- some $ listElemParser s
-    let document = DList (doc)
-    return $ (document)
+    let doc2 = DList doc
+    return doc2
 
 emptyListParser :: Parser Document
 emptyListParser = do
     charParser '['
     charParser ']'
-    let doc = DList ([])
-    return $ (doc)
+    let doc = DList []
+    return doc
 
 emptyMapParser :: Parser Document
 emptyMapParser = do
     charParser '['
     charParser ']'
-    let doc = DMap ([])
-    return $ (doc)
+    let doc = DMap []
+    return doc
 
 mapElemParser :: Int -> Parser (String, Document)
 mapElemParser s = do  
     stringParser "\n"
     stringParser (take s $ cycle " ")  
-    key <- keyParser s <|> keyParserEmpty s
+    key <- keyParser  <|> keyParserEmpty 
     stringParser ": "
     spaceParser 
-    doc <- dPrimitiveValue <|> emptyListParser <|> listParser (s+2)
+    doc <- dPrimitiveValue <|> emptyListParser <|> listParser (s+2) <|> emptyMapP
     return $ (key, doc)
     <|> mapInMapParser (s+2)
 
@@ -183,7 +190,7 @@ mapInMapParser :: Int -> Parser (String, Document)
 mapInMapParser s = do
     stringParser "\n"
     stringParser (take (s-2) $ cycle " ")
-    key <- keyParser s <|> keyParserEmpty s
+    key <- keyParser  <|> keyParserEmpty 
     stringParser ": "
     doc <- some $ mapElemParser s -- if this fails look for a list
     return $ (key, DMap (doc))
@@ -191,10 +198,10 @@ mapInMapParser s = do
 dMapParser :: Int -> Parser Document
 dMapParser s = do
     doc <- some $ mapElemParser s
-    return $ DMap (doc)
+    return $ DMap doc
 
-keyParser :: Int -> Parser String 
-keyParser s = Parser $ \input -> 
+keyParser :: Parser String 
+keyParser = Parser $ \input -> 
     let 
         result = takeWhile myPredicate input
         x      = take 1 (drop (length result) input) 
@@ -206,23 +213,31 @@ keyParser s = Parser $ \input ->
         myPredicate :: Char -> Bool
         myPredicate c = isAlphaNum c || c == '_' || c == '-'
 
-keyParserEmpty :: Int -> Parser String 
-keyParserEmpty s = do
-    charParser '"' 
-    charParser '"'
-    return ("\"\"")
+keyParserEmpty :: Parser String 
+keyParserEmpty  = do
+    stringParser "''"
+    return "''"
 
 starterParser :: Parser String
 starterParser = Parser $ \input -> do
     (a,r) <- runParser (stringParser "---") input
     return (a, r)
 
+emptyMapP :: Parser Document
+emptyMapP = do
+    charParser '{'
+    charParser '}'
+    let doc = DMap []
+    return doc
+
 parseDoc :: Parser Document 
 parseDoc =  do
-    sp <- starterParser
-    doc <- dPrimitiveValue <|> listParser 0 <|> dMapParser 0 <|> emptyListParser <|> emptyMapParser
+    _ <- starterParser
+    doc <- dPrimitiveValue <|> listParser 0 <|> dMapParser 0 
     return (doc)
     <|> dPrimitiveValue
+    <|> emptyListParser 
+    <|> emptyMapP
 
 -- IMPLEMENT
 -- Change right hand side as you wish
@@ -270,10 +285,8 @@ instance FromDocument Hint where
     
 parseHintDocument :: Document -> Either String [(Int, Int)]
 parseHintDocument (DMap [(key, DList l)]) = do
-    isKeyGood <- checkKey key "coords"
     coords <- getCoord l []
     return coords
-parseHintDocument _ = Left "DMap [\"coords\", DList l] expected"
 
 -- Adds hint data to the game state
 -- Errors are not reported since GameStart is already totally valid adt
@@ -286,3 +299,5 @@ hint state h = State {
     board = toggleShipHint (board state) (coords h),
     Lib1.hint_number = Lib1.hint_number state
 }
+
+
