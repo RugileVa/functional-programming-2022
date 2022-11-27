@@ -42,9 +42,123 @@ fromYamlTests :: TestTree
 fromYamlTests = testGroup "Document from yaml"
   [   testCase "null" $
         parseDocument "null" @?= Right DNull
+    , testCase "int" $
+        parseDocument "5" @?= Right (DInteger 5)
+    , testCase "string" $
+        parseDocument "5" @?= Right (DString "5") 
+    , testCase "list of ints" $              
+        parseDocument listOfInts @?= Right (DList [DInteger 5, DInteger 6])
+    , testCase "list of miscellaneous primitives" $
+        parseDocument listOfRandom @?= Right (DList [DInteger 5, DString "5", DNull])
+    , testCase "list in a list" $
+        parseDocument listInList @?= Right (DList [DList [DInteger 1 , DInteger 2], DList [DInteger 3, DInteger 4, DList [DInteger 5, DInteger 5]]])
+    , testCase "DMap in a DList." $
+        parseDocument oneDMapinDList' @?= Right (DList [DMap[("key", DInteger 5), ("key", DString "4")]])
+    , testCase "Few DMaps in a DList" $
+        parseDocument fewDMapsinDList' @?= Right (DList [DMap[("key", DInteger 5)], DMap[("key", DString "4")]])
+    , testCase "DList -> DMap -> DList" $
+        parseDocument listmaplist @?= Right (DList [DMap[("key",DList[DInteger 5])]])
+    , testCase "primitives/more than one mapping in DMap" $
+        parseDocument aFewMappings' @?= Right (DMap [("key", DInteger 5), ("key", DString "5"), ("key", DNull)])
+    , testCase "DMap -> DList" $           
+        parseDocument "---\nkey: \n  - 5\n" @?= Right (DMap [("key", DList[DInteger 5])])
+    , testCase "DMap -> DList -> DMap" $           
+        parseDocument maplistmap' @?= Right (DMap [("KEY", DList[DMap[("key", DNull), ("key", DNull), ("key", DList[DInteger 1, DInteger 2])]])])
+    , testCase "Simple DMap -> DMap" $            
+        parseDocument "---\nkey: \n  key: null\n" @?= Right (DMap [("key", DMap[("key", DNull)])])
+    , testCase "Complicated DMap -> DMap" $   
+         parseDocument cmp' @?= Right (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720_e0e7_47e7_be5c_a94d32e1088d")])
+     , testCase "Coords Dmap" $            
+        parseDocument cmp2 @?= Right (DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)],DMap [("col",DInteger 6),("row",DInteger 6)],DMap [("col",DInteger 5),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 4)],DMap [("col",DInteger 7),("row",DInteger 3)],DMap [("col",DInteger 7),("row",DInteger 2)],DMap [("col",DInteger 4),("row",DInteger 9)],DMap [("col",DInteger 5),("row",DInteger 9)],DMap [("col",DInteger 6),("row",DInteger 9)]])])
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
+  ]
+
+oneDMapinDList' :: String 
+oneDMapinDList = unlines [
+    "---" 
+   ,"- " 
+   ,"  key: 5"
+   ,"  key: \"4\""
+ ]
+
+fewDMapsinDList' :: String 
+fewDMapsinDList = unlines [
+    "---"
+   ,"- "
+   ,"  key: 5"
+   ,"- "
+   ,"  key: \"4\""
+ ]
+
+aFewMappings' :: String 
+aFewMappings  = unlines [
+   "---"
+  ,"key: 5"
+  ,"key: \"5\""
+  ,"key: null"
+ ]
+
+maplistmap' :: String 
+maplistmap = unlines [
+    "---"
+   ,"KEY: "
+   ,"  - "
+   ,"    key: null"
+   ,"    key: null"
+   ,"    key: "
+   ,"      - 1"
+   ,"      - 2"
+ ]
+
+cmp :: String 
+cmp = unlines [
+   "---"
+   ,"number_of_hints: 10"
+   ,"occupied_cols: "
+   ,"  head: 1"
+   ,"  tail: "
+   ,"    head: 1"
+   ,"    tail: "
+   ,"      head: 2"
+   ,"      tail: "
+   ,"        head: 3"
+   ,"        tail: "
+   ,"          head: 1"
+   ,"          tail: "
+   ,"            head: 4"
+   ,"            tail: "
+   ,"              head: 2"
+   ,"              tail: "
+   ,"                head: 4"
+   ,"                tail: "
+   ,"                  head: 2"
+   ,"                  tail: "
+   ,"                    head: 0"
+   ,"                    tail: null"
+   ,"occupied_rows: "
+   ,"  head: 2"
+   ,"  tail: "
+   ,"    head: 0"
+   ,"    tail: "
+   ,"      head: 2"
+   ,"      tail: "
+   ,"        head: 2"
+   ,"        tail: "
+   ,"          head: 2"
+   ,"          tail: "
+   ,"            head: 0"
+   ,"            tail: "
+   ,"              head: 6"
+   ,"              tail: "
+   ,"                head: 0"
+   ,"                tail: "
+   ,"                  head: 3"
+   ,"                  tail: "
+   ,"                    head: 3"
+   ,"                    tail: null"
+   ,"game_setup_id: \"31f1c720_e0e7_47e7_be5c_a94d32e1088d\""
   ]
 
 toYamlTests :: TestTree
@@ -74,7 +188,7 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "Empty Dmap" $               -- Dmaps with primitives
         renderDocument (DMap []) @?= "---\n[]"
     , testCase "String in DMap" $
-        renderDocument (DMap [("key", DString "5")]) @?= "---\nkey: 5\n"
+        renderDocument (DMap [("key", DString "5")]) @?= "---\nkey: \"5\"\n"
     , testCase "Integer in DMap" $
         renderDocument (DMap [("key", DInteger 5)]) @?= "---\nkey: 5\n"
     , testCase "null in DMap" $
@@ -131,9 +245,9 @@ trickyCaseString = unlines [
    "        - 3",
    "        - null",
    "        - ",
-   "          '': null",
+   "          \"\": null",
    "        - []",
-   "      key4: ''",  
+   "      key4: \"\"",  
    "    - null",
    "key5: []"
  ]
@@ -149,7 +263,7 @@ listOfRandom :: String
 listOfRandom = unlines [
       "---"
     , "- 5"
-    , "- 5"
+    , "- \"5\""
     , "- null"
   ]
   
@@ -181,7 +295,7 @@ oneDMapinDList = unlines [
     "---" 
    ,"- " 
    ,"  key: 5"
-   ,"  key2: 4"
+   ,"  key2: \"4\""
  ]
 
 fewDMapsinDList :: String 
@@ -190,14 +304,14 @@ fewDMapsinDList = unlines [
    ,"- "
    ,"  key: 5"
    ,"- "
-   ,"  key2: 4"
+   ,"  key2: \"4\""
  ]
 
 aFewMappings :: String 
 aFewMappings  = unlines [
    "---"
   ,"key1: 5"
-  ,"key2: 5"
+  ,"key2: \"5\""
   ,"key3: null"
  ]
 

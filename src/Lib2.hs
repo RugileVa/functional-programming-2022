@@ -55,7 +55,7 @@ h nestC k s = (wS nestC) ++ findK k ++ s
 
 findK :: String -> String  
 findK k   
-    | (k == "") = "''"  
+    | (k == "") = "\"\""  
     | otherwise = k  
 
 -- whiteSpace
@@ -65,19 +65,10 @@ wS nestLevel = take nestLevel $ cycle " "
 convertPrimitiveToYaml :: Document -> String
 convertPrimitiveToYaml = f where
     f (DInteger i) = show i
-    f (DString "") = "''"
-    f (DString s) = s
+    f (DString "") = "\"\""
+    f (DString s) = show s
     f DNull = "null"
 
--- Sąrašas mažų klaidų, bei kaip pataisėme testą, kad jis passint'ų: 
--- 1) Neveikė empty DMap (pataisėme)
--- 2) Neveikė empty DList (pataisėme)
--- 3) Neapdorojo tuščcio string'o DString konstruktoriuje ir DMap key. Savo funkcijoje tuščią string'ą vertėme į '', o ne \"\"" (pataisėme)
--- 4) Duotame ir mūsų testo rezultate skiriasi indentacija (pas mus daugiau tarpų nuo krašto), tačiau abi yra validžios, todėl palikome savąją.
--- 5) DMap [("", DNull)] teste laikomas null, mes palikome tai kaip key-value pair ('': null)
--- 6) nested mappings, kitaip negu duotame teste neiškyreme brūkšneliu, o indentacija. Pasitikrinome, kad tai validus yaml dokumentas. 
--- 6) DList elementai ir duotame ir mūsų teste yra pradedami "- ", tačiau jei tai nested DList ar DMap pradedame jį
---    iš naujos eilutės. Žr. 2.3 pvz iš YAML specification ir 2.5 pvz.
 
 
 -- IMPLEMENT
