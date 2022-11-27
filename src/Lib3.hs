@@ -223,6 +223,8 @@ parseDoc =  do
     doc <- dPrimitiveValue <|> listParser 0 <|> dMapParser 0
     return (doc)
     <|> dPrimitiveValue
+    <|> emptyListParser 
+    <|> emptyMapParser
 
 -- IMPLEMENT
 -- Change right hand side as you wish
