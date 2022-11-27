@@ -68,7 +68,7 @@ fromYamlTests = testGroup "Document from yaml"
         parseDocument "---\nkey: \n  key: null\n" @?= Right (DMap [("key", DMap[("key", DNull)])])
     , testCase "Complicated DMap -> DMap" $   
          parseDocument cmp' @?= Right (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720_e0e7_47e7_be5c_a94d32e1088d")])
-     , testCase "Coords Dmap" $            
+    , testCase "Coords Dmap" $            
         parseDocument cmp2 @?= Right (DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)],DMap [("col",DInteger 6),("row",DInteger 6)],DMap [("col",DInteger 5),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 4)],DMap [("col",DInteger 7),("row",DInteger 3)],DMap [("col",DInteger 7),("row",DInteger 2)],DMap [("col",DInteger 4),("row",DInteger 9)],DMap [("col",DInteger 5),("row",DInteger 9)],DMap [("col",DInteger 6),("row",DInteger 9)]])])
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
@@ -178,7 +178,7 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "list in a list + primitive" $
         renderDocument (DList [DList [DInteger 1 , DInteger 2], DNull]) @?= nestedListandPrim
     , testCase "empty list" $
-        renderDocument (DList []) @?= "---\n[]"
+        renderDocument (DList []) @?= "[]\n"
     , testCase "DMap in a DList." $
         renderDocument (DList [DMap[("key", DInteger 5), ("key2", DString "4")]]) @?= oneDMapinDList
     , testCase "Few DMaps in a DList" $
@@ -186,7 +186,7 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "DList -> DMap -> DList" $
          renderDocument (DList [DMap[("key",DList[DInteger 5])]])  @?= listmaplist
     , testCase "Empty Dmap" $               -- Dmaps with primitives
-        renderDocument (DMap []) @?= "---\n[]"
+        renderDocument (DMap []) @?= "{}\n"
     , testCase "String in DMap" $
         renderDocument (DMap [("key", DString "5")]) @?= "---\nkey: \"5\"\n"
     , testCase "Integer in DMap" $
@@ -245,9 +245,9 @@ trickyCaseString = unlines [
    "        - 3",
    "        - null",
    "        - ",
-   "          \"\": null",
+   "          '': null",
    "        - []",
-   "      key4: \"\"",  
+   "      key4: ''",  
    "    - null",
    "key5: []"
  ]
