@@ -220,11 +220,9 @@ starterParser = Parser $ \input -> do
 parseDoc :: Parser Document 
 parseDoc =  do
     sp <- starterParser
-    doc <- dPrimitiveValue <|> listParser 0 <|> dMapParser 0
+    doc <- dPrimitiveValue <|> listParser 0 <|> dMapParser 0 <|> emptyListParser <|> emptyMapParser
     return (doc)
     <|> dPrimitiveValue
-    <|> emptyListParser 
-    <|> emptyMapParser
 
 -- IMPLEMENT
 -- Change right hand side as you wish
