@@ -192,11 +192,11 @@ cmp22 = unlines [
 toYamlTests :: TestTree
 toYamlTests = testGroup "Document to yaml"
   [   testCase "null" $                      -- primitives
-        renderDocument DNull @?= "null"
+        renderDocument DNull @?= "null\n"
     , testCase "int" $
-        renderDocument (DInteger 5) @?= "5"
+        renderDocument (DInteger 5) @?= "5\n"
     , testCase "string" $
-        renderDocument (DString "5") @?= "\"5\"" 
+        renderDocument (DString "5") @?= "\"5\"\n" 
     , testCase "list of ints" $              -- list and nested lists
         renderDocument (DList [DInteger 5, DInteger 6]) @?= listOfInts
     , testCase "list of miscellaneous primitives" $
