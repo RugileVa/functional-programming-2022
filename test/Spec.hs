@@ -41,11 +41,11 @@ dogfood = testGroup "Eating your own dogfood"
 fromYamlTests :: TestTree
 fromYamlTests = testGroup "Document from yaml"
   [   testCase "null" $
-        parseDocument "null" @?= Right DNull
+        parseDocument "null\n" @?= Right DNull
     , testCase "int" $
-        parseDocument "5" @?= Right (DInteger 5)
+        parseDocument "5\n" @?= Right (DInteger 5)
     , testCase "string" $
-        parseDocument "\"5\"" @?= Right (DString "5") 
+        parseDocument "\"5\"\n" @?= Right (DString "5") 
     , testCase "list of ints" $              
         parseDocument listOfInts @?= Right (DList [DInteger 5, DInteger 6])
     , testCase "list of miscellaneous primitives" $
@@ -61,11 +61,11 @@ fromYamlTests = testGroup "Document from yaml"
     , testCase "primitives/more than one mapping in DMap" $
         parseDocument aFewMappings' @?= Right (DMap [("key", DInteger 5), ("key", DString "5"), ("key", DNull)])
     , testCase "DMap -> DList" $           
-        parseDocument "---\nkey: \n  - 5\n" @?= Right (DMap [("key", DList[DInteger 5])])
+        parseDocument "---\nkey: \n - 5\n" @?= Right (DMap [("key", DList[DInteger 5])])
     , testCase "DMap -> DList -> DMap" $           
         parseDocument maplistmap' @?= Right (DMap [("KEY", DList[DMap[("key", DNull), ("key", DNull), ("key", DList[DInteger 1, DInteger 2])]])])
     , testCase "Simple DMap -> DMap" $            
-        parseDocument "---\nkey: \n  key: null\n" @?= Right (DMap [("key", DMap[("key", DNull)])])
+        parseDocument "---\nkey: \n key: null\n" @?= Right (DMap [("key", DMap[("key", DNull)])])
     , testCase "Complicated DMap -> DMap" $   
          parseDocument cmp' @?= Right (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720_e0e7_47e7_be5c_a94d32e1088d")])
     , testCase "Coords Dmap" $            
