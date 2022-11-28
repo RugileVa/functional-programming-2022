@@ -10,37 +10,36 @@
 
 <letter>     ::=  <lowercase-letter> | <uppercase-letter>
 
-<ws> ::= ' '
-
-<new-line>   ::= '\n'
-
-<character> ::= <letter> | <digit> | <whitespace> | '_'
+<ws>        ::= ' '
+<us>        ::= '_'
+<dash>      ::= '-'
+<new-line>  ::= '\n'
 
 <digit>         ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
-<natural-number>::=  <digit> | <natural-number> <digit>  
-<integer>       ::=  '(' '-' <natural-number> ')' | <natural-number>
-<string>        ::= '"' <character> <string> '"'| "'" "'"
-<null>          ::= 'null' 
-
+<natural-number>::= <digit> { <digit> }  
+<integer>       ::=  '(' '-' <natural-number> ')' <new-line> | <natural-number> <new-line>
+<literal>       ::= <letter> | <digit> | <whitespace> | <us> | <dash>
+<string>        ::= '"' { <literal> } '"' <new-line> | "'" "'"  <new-line> 
+<null>          ::= 'null' <new-line>
 <primitive>     ::= <integer> | <string> | <null>
+
+<list-st>       ::= '-' ' '
+<key-str>       ::= {<letter>} | ''' '''
+<map-key>       ::= <key-str> ':' <ws>
+<s_indent>      ::= <ws> <ws>
+<indentation>   ::= {<s_indent>}
 
 <empty-list> 	::= '[' ']'
 <empty-map>     ::= '{' '}'
 
-<list>		        ::= <list-elem><list>
-<list-item>         ::= <primitive> | <map> | <empty-list> | <empty-map> 
-<list-elem>         ::= <new-line> [<ws>*] '-' ' ' [<ws>*] <list-item> [ws*] | <nested-list-elem>
-<nested-list-elem>  ::= <new-line> [<ws>*] '-' ' ' <list-elem>+
-
-<key>             ::= <letter><key> | "'" "'"
+<list>		      ::= <list-elem><list>
+<list-elem>       ::= 
 
 <map>		      ::= <map-elem><map>
-<map-item>        ::= <primitive> | <list> | <empty-list> | <empty-map>
-<map-elem>        ::= <new-line> [<ws>*] <key> ':' ' ' [<ws>*] <map-item> [<ws>*] | <nested-map-elem>
-<nested-map-elem> ::=  <new-line> [<ws>*] <key> ':' ' '<map-elem>+
+<map-elem>        ::= 
 
-<starter> 	::= '---'
+<starter> 	 ::= '-' '-' '-' '\n'
 
-<data-types> :: <primitives> | <map> | <list>
+<data-types> :: <primitives> | <map> | <list> | <empty-list> | <empty-map>
 
-<doc>        ::= <starter> <data-types> | <primitives>
+<doc>        := <starter> <data-types> | <data-types>

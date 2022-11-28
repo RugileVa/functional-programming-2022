@@ -61,6 +61,9 @@ instance Alternative Parser where
           Right (output, rest) -> Right (output, rest)
       Right (output, rest) -> Right (output, rest)
 
+optionalP :: Parser a -> Parser ()
+optionalP p = () <$ p <|> pure ()
+
 charParser :: Char -> Parser Char 
 charParser c = Parser $ \input -> 
     case input of 
@@ -73,7 +76,12 @@ stringParser :: String -> Parser String
 stringParser [] = return []
 stringParser (x:xs) = charParser x >> stringParser xs >> return (x:xs)
 
--- natural numbers
+spaceParser :: Parser String 
+spaceParser = do many $ charParser ' '
+
+nl :: Parser String 
+nl = stringParser "\n"
+
 natParser :: Parser Int 
 natParser = Parser $ \input ->
     let 
@@ -89,15 +97,14 @@ intParser = do
     charParser '-'
     n <- natParser
     charParser ')'
+    nl 
     return (-n)
-    <|> natParser
+    <|> do
+    n <- natParser
+    nl 
+    return n
 
-spaceParser :: Parser String 
-spaceParser = do 
-    res <- many $ charParser ' '
-    return res
-
--- digits, ws, letters
+-- digits, ws, letters, '_', '-'
 stringLiteralParser :: Parser String 
 stringLiteralParser = Parser $ \input -> 
     let 
@@ -116,89 +123,57 @@ stringInQParser = do
     charParser '"'
     str <- stringLiteralParser 
     charParser '"'
-    return $ str
+    nl 
+    return str
+
+emptydString :: Parser Document 
+emptydString = do
+    stringParser "''" <|> stringParser "\"\""
+    nl
+    return $ DString ""
 
 dInteger :: Parser Document 
 dInteger =  DInteger <$> intParser
 
 dNull :: Parser Document 
-dNull = (\_ -> DNull) <$> stringParser "null"
+dNull = (\_ -> DNull) <$> stringParser "null\n"
 
--- can be digits, letters, white spaces
 dString :: Parser Document 
-dString = DString <$> stringInQParser
-
-emptydString :: Parser Document 
-emptydString = do
-    stringParser "''"
-    return $ DString ("''")
+dString = DString <$> stringInQParser <|> emptydString
 
 dPrimitiveValue :: Parser Document
-dPrimitiveValue = dInteger <|> dNull <|> dString <|> emptydString
+dPrimitiveValue = dInteger <|> dNull <|> dString 
+
+emptyListP :: Parser Document
+emptyListP = charParser '[' >> charParser ']' >> nl >> return(DList [])
+
+emptyMapP :: Parser Document
+emptyMapP = charParser '{' >> charParser '}' >> nl >> return(DMap [])
+
+list_s :: Parser String 
+list_s = Parser $ \input -> 
+    case runParser (stringParser "- ") input of
+    Right (x, xs) -> return (x, xs)
+    _             -> Left "List element must start with '- '" 
 
 listElemParser :: Int -> Parser Document
 listElemParser s = do
-    stringParser "\n"
-    stringParser (take s $ cycle " ")  
-    stringParser "- "
-    spaceParser 
-    doc <- dPrimitiveValue <|> emptyMapP <|> dMapParser (s+2) <|> emptyListParser
-    spaceParser
+    list_s
+    optionalP nl  
+    doc <- dPrimitiveValue <|> emptyMapP <|> emptyListP <|> dMapParser (s+1) <|> listParser (s+1)
     return doc
-    <|> listInListParser (s+2)
-
-listInListParser :: Int -> Parser Document 
-listInListParser s = do
-    stringParser "\n"
-    stringParser (take (s-2) $ cycle " ")
-    stringParser "- "
-    doc <- some $ listElemParser s -- if this fails than check for dmap
-    return $ DList (doc)
 
 listParser :: Int -> Parser Document
 listParser s = do
-    doc <- some $ listElemParser s
-    let doc2 = DList doc
-    return doc2
+    fdoc <- optionalP ( stringParser (take s $ cycle " ") ) >> listElemParser s
+    rdoc <- many (stringParser (take s $ cycle " ") >> listElemParser s)
+    return $ DList $ fdoc:rdoc
 
-emptyListParser :: Parser Document
-emptyListParser = do
-    charParser '['
-    charParser ']'
-    let doc = DList []
-    return doc
-
-emptyMapParser :: Parser Document
-emptyMapParser = do
-    charParser '['
-    charParser ']'
-    let doc = DMap []
-    return doc
-
-mapElemParser :: Int -> Parser (String, Document)
-mapElemParser s = do  
-    stringParser "\n"
-    stringParser (take s $ cycle " ")  
-    key <- keyParser  <|> keyParserEmpty 
-    stringParser ": "
-    spaceParser 
-    doc <- dPrimitiveValue <|> emptyListParser <|> listParser (s+2) <|> emptyMapP
-    return $ (key, doc)
-    <|> mapInMapParser (s+2)
-
-mapInMapParser :: Int -> Parser (String, Document)
-mapInMapParser s = do
-    stringParser "\n"
-    stringParser (take (s-2) $ cycle " ")
-    key <- keyParser  <|> keyParserEmpty 
-    stringParser ": "
-    doc <- some $ mapElemParser s -- if this fails look for a list
-    return $ (key, DMap (doc))
-
-dMapParser :: Int -> Parser Document
-dMapParser s = do
-    doc <- some $ mapElemParser s
-    return $ DMap doc
+keyCol :: Parser String 
+keyCol = Parser $ \input ->
+    case runParser (stringParser ": ") input of 
+        Right (x,xs) -> return (x, xs)
+        _            -> Left "Map key must be followed with ': '"
 
 keyParser :: Parser String 
 keyParser = Parser $ \input -> 
@@ -211,33 +186,31 @@ keyParser = Parser $ \input ->
         _    -> Left $ "Unexpected literal in key " ++ x 
     where 
         myPredicate :: Char -> Bool
-        myPredicate c = isAlphaNum c || c == '_' || c == '-'
+        myPredicate c = isAlpha c || c == '_' || c == '-'
 
 keyParserEmpty :: Parser String 
-keyParserEmpty  = do
-    stringParser "''"
-    return "''"
+keyParserEmpty  = stringParser "''" >> return ""
+
+mapElemParser :: Int -> Parser (String, Document)
+mapElemParser s = do  
+    key <- keyParser <|> keyParserEmpty
+    keyCol
+    optionalP nl 
+    doc <- dPrimitiveValue <|> emptyListP <|> emptyMapP <|> listParser (s+1) <|> dMapParser (s+1)
+    return (key, doc)
+
+dMapParser :: Int -> Parser Document
+dMapParser s = do
+    fdoc <- optionalP (stringParser (take s $ cycle " ")) >> mapElemParser s
+    rdoc <- many (stringParser (take s $ cycle " ") >> mapElemParser s)
+    return $ DMap $ fdoc:rdoc
 
 starterParser :: Parser String
-starterParser = Parser $ \input -> do
-    (a,r) <- runParser (stringParser "---") input
-    return (a, r)
-
-emptyMapP :: Parser Document
-emptyMapP = do
-    charParser '{'
-    charParser '}'
-    let doc = DMap []
-    return doc
+starterParser =  stringParser "---\n"
 
 parseDoc :: Parser Document 
-parseDoc =  do
-    _ <- starterParser
-    doc <- dPrimitiveValue <|> listParser 0 <|> dMapParser 0 
-    return (doc)
-    <|> dPrimitiveValue
-    <|> emptyListParser 
-    <|> emptyMapP
+parseDoc =  optionalP starterParser >>
+    dPrimitiveValue <|> listParser 0 <|> dMapParser 0 <|> emptyListP <|> emptyMapP
 
 -- IMPLEMENT
 -- Change right hand side as you wish
@@ -250,11 +223,11 @@ data GameStart = GameStart {
 
 instance FromDocument GameStart where
     fromDocument d = do
-        (hints, rowData, colData) <- parseGameStartDocument d
+        (hints, rowDat, colDat) <- parseGameStartDocument d
         Right GameStart {
             Lib3.hint_number = hints,
-            occupied_rows = rowData,
-            occupied_cols = colData
+            occupied_rows = rowDat,
+            occupied_cols = colDat
         }
 
 -- This adds game data to initial state
@@ -278,15 +251,13 @@ data Hint = Hint {
 
 instance FromDocument Hint where
     fromDocument doc = do
-        coords <- parseHintDocument doc
+        coord <- parseHintDocument doc
         Right Hint {
-            coords = coords
+            coords = coord
         }
     
 parseHintDocument :: Document -> Either String [(Int, Int)]
-parseHintDocument (DMap [(key, DList l)]) = do
-    coords <- getCoord l []
-    return coords
+parseHintDocument (DMap [(_, DList l)]) = do getCoord l []
 
 -- Adds hint data to the game state
 -- Errors are not reported since GameStart is already totally valid adt
