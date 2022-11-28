@@ -26,17 +26,16 @@
 <list-st>       ::= '-' ' '
 <key-str>       ::= {<letter>} | ''' '''
 <map-key>       ::= <key-str> ':' <ws>
-<s_indent>      ::= <ws> <ws>
-<indentation>   ::= {<s_indent>}
+<indentation>   ::= {' '}
 
 <empty-list> 	::= '[' ']'
 <empty-map>     ::= '{' '}'
 
 <list>		      ::= <list-elem><list>
-<list-elem>       ::= 
+<list-elem>       ::= <indentation> <list-st> [<new-line] <data-types> 
 
 <map>		      ::= <map-elem><map>
-<map-elem>        ::= 
+<map-elem>        ::= <indentation> <key-str> [<new-line] <data-types> 
 
 <starter> 	 ::= '-' '-' '-' '\n'
 
