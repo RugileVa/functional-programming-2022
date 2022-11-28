@@ -27,7 +27,7 @@ renderDocument (DMap [])   = "{}\n"
 renderDocument (DList [])  = "[]\n"
 renderDocument (DList x)   = "---\n" ++ unlines (toList  0 (DList x)) 
 renderDocument (DMap  x)   = "---\n" ++ unlines (mapping 0 (DMap  x)) 
-renderDocument  d          = convertPrimitiveToYaml d
+renderDocument  d          = convertPrimitiveToYaml d ++ "\n"
 
 toList :: Int -> Document -> [String]
 toList nestC doc = 
