@@ -9,6 +9,7 @@ import Lib2 (parseGameStartDocument, checkKey, getCoord, toggleShipHint)
 import Types ( Document(..), FromDocument, fromDocument )
 import Lib1 (State(..), Cell(..))
 import Control.Applicative
+import Control.Monad
 import Data.Char
 
 -- IMPLEMENT
@@ -57,7 +58,7 @@ instance Alternative Parser where
     case l input of
       Left err ->
         case r input of
-          Left err' -> Left err
+          Left _ -> Left err
           Right (output, rest) -> Right (output, rest)
       Right (output, rest) -> Right (output, rest)
 
@@ -68,7 +69,7 @@ charParser :: Char -> Parser Char
 charParser c = Parser $ \input -> 
     case input of 
         (h:rest) | h == c      -> Right (h, rest)
-        x        | x == ""     -> Left   "Unexcpected end of input. charParser"
+        x        | x == ""     -> Left   "Unexcpected end of input in charParser"
         (h:_)                  -> Left $ "Unexpected " ++ convert [h] ++ ", expected " ++ [c] 
         where convert h = if h == " " then "' '" else h
             
@@ -88,15 +89,15 @@ natParser = Parser $ \input ->
         prefix = takeWhile isDigit input
     in
         case prefix of
-            [] -> Left "Unexpected end of input. natParser"
+            [] -> Left "Unexpected end of input in natParser"
             _  -> Right (read prefix, drop (length prefix) input)
 
 intParser :: Parser Int 
 intParser = do 
-    charParser '('
+    optionalP (charParser '(')
     charParser '-'
     n <- natParser
-    charParser ')'
+    optionalP (charParser ')')
     nl 
     return (-n)
     <|> do
@@ -127,16 +128,13 @@ stringInQParser = do
     return str
 
 emptydString :: Parser Document 
-emptydString = do
-    stringParser "''" <|> stringParser "\"\""
-    nl
-    return $ DString ""
+emptydString = stringParser "''" <|> stringParser "\"\"" >> nl >> return(DString "")
 
 dInteger :: Parser Document 
 dInteger =  DInteger <$> intParser
 
 dNull :: Parser Document 
-dNull = (\_ -> DNull) <$> stringParser "null\n"
+dNull = DNull <$ stringParser "null\n"
 
 dString :: Parser Document 
 dString = DString <$> stringInQParser <|> emptydString
@@ -144,40 +142,35 @@ dString = DString <$> stringInQParser <|> emptydString
 dPrimitiveValue :: Parser Document
 dPrimitiveValue = dInteger <|> dNull <|> dString 
 
+docParser :: Int -> Parser Document 
+docParser s = listParser s <|> dMapParser s <|> dPrimitiveValue 
+
 emptyListP :: Parser Document
-emptyListP = charParser '[' >> charParser ']' >> nl >> return(DList [])
+emptyListP = stringParser "[]" >> nl >> return(DList [])
 
 emptyMapP :: Parser Document
-emptyMapP = charParser '{' >> charParser '}' >> nl >> return(DMap [])
+emptyMapP = stringParser "{}" >> nl >> return(DMap [])
 
-list_s :: Parser String 
-list_s = Parser $ \input -> 
-    case runParser (stringParser "- ") input of
-    Right (x, xs) -> return (x, xs)
-    _             -> Left "List element must start with '- '" 
+listS :: Parser () 
+listS = () <$ (stringParser "-" >> (stringParser " \n" <|> stringParser "\n" <|> stringParser " ")) 
 
 listElemParser :: Int -> Parser Document
 listElemParser s = do
-    list_s
-    optionalP nl  
-    doc <- dPrimitiveValue <|> emptyMapP <|> emptyListP <|> dMapParser (s+1) <|> listParser (s+1)
-    return doc
+    listS
+    docParser (s+2)
 
 listParser :: Int -> Parser Document
-listParser s = do
-    fdoc <- optionalP ( stringParser (take s $ cycle " ") ) >> listElemParser s
-    rdoc <- many (stringParser (take s $ cycle " ") >> listElemParser s)
+listParser s = emptyListP <|> do
+    fdoc <- optionalP (indent s) >> listElemParser s
+    rdoc <- many ( indent s  >> listElemParser s )
     return $ DList $ fdoc:rdoc
 
-keyCol :: Parser String 
-keyCol = Parser $ \input ->
-    case runParser (stringParser ": ") input of 
-        Right (x,xs) -> return (x, xs)
-        _            -> Left "Map key must be followed with ': '"
+keyCol :: Parser () 
+keyCol = () <$ (stringParser ":" >> (stringParser " \n" <|> stringParser "\n" <|> stringParser " "))
 
 keyParser :: Parser String 
 keyParser = Parser $ \input -> 
-    let 
+    let  
         result = takeWhile myPredicate input
         x      = take 1 (drop (length result) input) 
     in 
@@ -193,24 +186,25 @@ keyParserEmpty  = stringParser "''" >> return ""
 
 mapElemParser :: Int -> Parser (String, Document)
 mapElemParser s = do  
-    key <- keyParser <|> keyParserEmpty
-    keyCol
-    optionalP nl 
-    doc <- dPrimitiveValue <|> emptyListP <|> emptyMapP <|> listParser (s+1) <|> dMapParser (s+1)
+    key <- (keyParser <|> keyParserEmpty) <* keyCol
+    doc <- listParser s <|> docParser (s+2) 
     return (key, doc)
 
 dMapParser :: Int -> Parser Document
-dMapParser s = do
-    fdoc <- optionalP (stringParser (take s $ cycle " ")) >> mapElemParser s
-    rdoc <- many (stringParser (take s $ cycle " ") >> mapElemParser s)
+dMapParser s = emptyMapP <|> do
+    fdoc <- optionalP (indent s) >> mapElemParser s
+    rdoc <- many (indent s >> mapElemParser s)
     return $ DMap $ fdoc:rdoc
+
+indent :: Int -> Parser ()
+indent n = replicateM_ n (charParser ' ')
 
 starterParser :: Parser String
 starterParser =  stringParser "---\n"
 
 parseDoc :: Parser Document 
 parseDoc =  optionalP starterParser >>
-    dPrimitiveValue <|> listParser 0 <|> dMapParser 0 <|> emptyListP <|> emptyMapP
+    listParser 0 <|> dMapParser 0 <|> dPrimitiveValue
 
 -- IMPLEMENT
 -- Change right hand side as you wish

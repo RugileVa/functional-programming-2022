@@ -34,9 +34,9 @@ toList nestC doc =
             case doc of 
             (DList []) -> []
             (DList ((DList []) : xs))  -> ((wS nestC ++ "- []") : toList nestC (DList xs))
-            (DList ((DList x) : xs))   -> ((wS nestC ++ "- "  ) : toList (nestC + 1) (DList x)) ++ toList nestC (DList xs) 
+            (DList ((DList x) : xs))   -> ((wS nestC ++ "- "  ) : toList (nestC + 2) (DList x)) ++ toList nestC (DList xs) 
             (DList ((DMap []) : xs))   -> ((wS nestC ++ "- {}") : toList nestC (DList xs))
-            (DList ((DMap  x) : xs))   -> ((wS nestC ++ "- "  ) : mapping (nestC + 1) (DMap x)) ++ toList nestC (DList xs)
+            (DList ((DMap  x) : xs))   -> ((wS nestC ++ "- "  ) : mapping (nestC + 2) (DMap x)) ++ toList nestC (DList xs)
             (DList (x : xs))           -> ( wS nestC ++ "- " ++ convertPrimitiveToYaml x   )  : (toList nestC (DList xs)) 
 
 mapping :: Int -> Document -> [String]
@@ -44,9 +44,9 @@ mapping nestC doc =
             case doc of
             (DMap []) -> []
             (DMap ((k, DMap []) : xs))   -> (h nestC k ": " ++ "{}")  :  mapping nestC (DMap xs)
-            (DMap ((k, DMap v) : xs))    -> h nestC k ": " : (mapping (nestC + 1) (DMap v) ++ mapping nestC (DMap xs))
+            (DMap ((k, DMap v) : xs))    -> h nestC k ": " : (mapping (nestC + 2) (DMap v) ++ mapping nestC (DMap xs))
             (DMap ((k,  DList []) : xs)) -> (h nestC k ": " ++ "[]")  : mapping nestC (DMap xs)
-            (DMap ((k,  DList v) : xs))  -> h nestC k ": " : (toList (nestC + 1) (DList v) ++ mapping nestC (DMap xs))
+            (DMap ((k,  DList v) : xs))  -> h nestC k ": " : (toList (nestC + 2) (DList v) ++ mapping nestC (DMap xs))
             (DMap ((k, v) : xs))         -> (h nestC k ": " ++ convertPrimitiveToYaml v)     : (mapping nestC (DMap xs))
 
 h :: Int -> String -> String -> String 
