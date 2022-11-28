@@ -41,11 +41,11 @@ dogfood = testGroup "Eating your own dogfood"
 fromYamlTests :: TestTree
 fromYamlTests = testGroup "Document from yaml"
   [   testCase "null" $
-        parseDocument "null" @?= Right DNull
+        parseDocument "null\n" @?= Right DNull
     , testCase "int" $
-        parseDocument "5" @?= Right (DInteger 5)
+        parseDocument "5\n" @?= Right (DInteger 5)
     , testCase "string" $
-        parseDocument "\"5\"" @?= Right (DString "5") 
+        parseDocument "\"5\"\n" @?= Right (DString "5") 
     , testCase "list of ints" $              
         parseDocument listOfInts @?= Right (DList [DInteger 5, DInteger 6])
     , testCase "list of miscellaneous primitives" $
@@ -61,15 +61,17 @@ fromYamlTests = testGroup "Document from yaml"
     , testCase "primitives/more than one mapping in DMap" $
         parseDocument aFewMappings' @?= Right (DMap [("key", DInteger 5), ("key", DString "5"), ("key", DNull)])
     , testCase "DMap -> DList" $           
-        parseDocument "---\nkey: \n  - 5\n" @?= Right (DMap [("key", DList[DInteger 5])])
+        parseDocument "---\nkey: \n - 5\n" @?= Right (DMap [("key", DList[DInteger 5])])
     , testCase "DMap -> DList -> DMap" $           
         parseDocument maplistmap' @?= Right (DMap [("KEY", DList[DMap[("key", DNull), ("key", DNull), ("key", DList[DInteger 1, DInteger 2])]])])
     , testCase "Simple DMap -> DMap" $            
-        parseDocument "---\nkey: \n  key: null\n" @?= Right (DMap [("key", DMap[("key", DNull)])])
+        parseDocument "---\nkey: \n key: null\n" @?= Right (DMap [("key", DMap[("key", DNull)])])
     , testCase "Complicated DMap -> DMap" $   
          parseDocument cmp' @?= Right (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720_e0e7_47e7_be5c_a94d32e1088d")])
     , testCase "Coords Dmap" $            
         parseDocument cmp2 @?= Right (DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)],DMap [("col",DInteger 6),("row",DInteger 6)],DMap [("col",DInteger 5),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 4)],DMap [("col",DInteger 7),("row",DInteger 3)],DMap [("col",DInteger 7),("row",DInteger 2)],DMap [("col",DInteger 4),("row",DInteger 9)],DMap [("col",DInteger 5),("row",DInteger 9)],DMap [("col",DInteger 6),("row",DInteger 9)]])])
+    , testCase "Coords Dmap" $            
+        parseDocument cmp22 @?= Right (DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)],DMap [("col",DInteger 6),("row",DInteger 6)],DMap [("col",DInteger 5),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 4)],DMap [("col",DInteger 7),("row",DInteger 3)],DMap [("col",DInteger 7),("row",DInteger 2)],DMap [("col",DInteger 4),("row",DInteger 9)],DMap [("col",DInteger 5),("row",DInteger 9)],DMap [("col",DInteger 6),("row",DInteger 9)]])])
     -- IMPLEMENT more test cases:
     -- * other primitive types/values
     -- * nested types
@@ -79,17 +81,17 @@ oneDMapinDList' :: String
 oneDMapinDList' = unlines [
     "---" 
    ,"- " 
-   ,"  key: 5"
-   ,"  key: \"4\""
+   ," key: 5"
+   ," key: \"4\""
  ]
 
 fewDMapsinDList' :: String 
 fewDMapsinDList' = unlines [
     "---"
    ,"- "
-   ,"  key: 5"
+   ," key: 5"
    ,"- "
-   ,"  key: \"4\""
+   ," key: \"4\""
  ]
 
 aFewMappings' :: String 
@@ -104,12 +106,12 @@ maplistmap' :: String
 maplistmap' = unlines [
     "---"
    ,"KEY: "
-   ,"  - "
-   ,"    key: null"
-   ,"    key: null"
-   ,"    key: "
-   ,"      - 1"
-   ,"      - 2"
+   ," - "
+   ,"  key: null"
+   ,"  key: null"
+   ,"  key: "
+   ,"   - 1"
+   ,"   - 2"
  ]
 
 cmp' :: String 
@@ -117,58 +119,84 @@ cmp' = unlines [
    "---"
    ,"number_of_hints: 10"
    ,"occupied_cols: "
+   ," head: 1"
+   ," tail: "
    ,"  head: 1"
    ,"  tail: "
-   ,"    head: 1"
+   ,"   head: 2"
+   ,"   tail: "
+   ,"    head: 3"
    ,"    tail: "
-   ,"      head: 2"
+   ,"     head: 1"
+   ,"     tail: "
+   ,"      head: 4"
    ,"      tail: "
-   ,"        head: 3"
+   ,"       head: 2"
+   ,"       tail: "
+   ,"        head: 4"
    ,"        tail: "
-   ,"          head: 1"
-   ,"          tail: "
-   ,"            head: 4"
-   ,"            tail: "
-   ,"              head: 2"
-   ,"              tail: "
-   ,"                head: 4"
-   ,"                tail: "
-   ,"                  head: 2"
-   ,"                  tail: "
-   ,"                    head: 0"
-   ,"                    tail: null"
+   ,"         head: 2"
+   ,"         tail: "
+   ,"          head: 0"
+   ,"          tail: null"
    ,"occupied_rows: "
-   ,"  head: 2"
+   ," head: 2"
+   ," tail: "
+   ,"  head: 0"
    ,"  tail: "
-   ,"    head: 0"
+   ,"   head: 2"
+   ,"   tail: "
+   ,"    head: 2"
    ,"    tail: "
-   ,"      head: 2"
+   ,"     head: 2"
+   ,"     tail: "
+   ,"      head: 0"
    ,"      tail: "
-   ,"        head: 2"
+   ,"       head: 6"
+   ,"       tail: "
+   ,"        head: 0"
    ,"        tail: "
-   ,"          head: 2"
-   ,"          tail: "
-   ,"            head: 0"
-   ,"            tail: "
-   ,"              head: 6"
-   ,"              tail: "
-   ,"                head: 0"
-   ,"                tail: "
-   ,"                  head: 3"
-   ,"                  tail: "
-   ,"                    head: 3"
-   ,"                    tail: null"
+   ,"         head: 3"
+   ,"         tail: "
+   ,"          head: 3"
+   ,"          tail: null"
    ,"game_setup_id: \"31f1c720_e0e7_47e7_be5c_a94d32e1088d\""
+  ]
+
+cmp22 :: String
+cmp22 = unlines [
+   "---"
+   ,"coords: "
+   ,"- col: 8"
+   ,"  row: 6"
+   ,"- col: 7"
+   ,"  row: 6"
+   ,"- col: 6"
+   ,"  row: 6"
+   ,"- col: 5"
+   ,"  row: 6"
+   ,"- col: 7"
+   ,"  row: 4"
+   ,"- col: 7"
+   ,"  row: 3"
+   ,"- col: 7"
+   ,"  row: 2"
+   ,"- col: 4"
+   ,"  row: 9"
+   ,"- col: 5"
+   ,"  row: 9"
+   ,"- col: 6"
+   ,"  row: 9"
   ]
 
 toYamlTests :: TestTree
 toYamlTests = testGroup "Document to yaml"
   [   testCase "null" $                      -- primitives
-        renderDocument DNull @?= "null"
+        renderDocument DNull @?= "null\n"
     , testCase "int" $
-        renderDocument (DInteger 5) @?= "5"
+        renderDocument (DInteger 5) @?= "5\n"
     , testCase "string" $
-        renderDocument (DString "5") @?= "\"5\"" 
+        renderDocument (DString "5") @?= "\"5\"\n" 
     , testCase "list of ints" $              -- list and nested lists
         renderDocument (DList [DInteger 5, DInteger 6]) @?= listOfInts
     , testCase "list of miscellaneous primitives" $
@@ -196,13 +224,11 @@ toYamlTests = testGroup "Document to yaml"
     , testCase "primitives/more than one mapping in DMap" $
         renderDocument (DMap [("key1", DInteger 5), ("key2", DString "5"), ("key3", DNull)]) @?= aFewMappings
     , testCase "DMap -> DList" $           -- DMaps with DLists 
-        renderDocument (DMap [("key", DList[DInteger 5])]) @?= "---\nkey: \n  - 5\n"
+        renderDocument (DMap [("key", DList[DInteger 5])]) @?= "---\nkey: \n - 5\n"
     , testCase "DMap -> DList -> DMap" $           
         renderDocument (DMap [("KEY", DList[DMap[("key1", DNull), ("key2", DNull), ("key3", DList[DInteger 1, DInteger 2])]])]) @?= maplistmap
     , testCase "Simple DMap -> DMap" $            -- DMaps with DMaps
-        renderDocument (DMap [("key1", DMap[("key2", DNull)])]) @?= "---\nkey1: \n  key2: null\n"
-     , testCase "Complicated DMap -> DMap" $            
-        renderDocument (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720-e0e7-47e7-be5c-a94d32e1088d")]) @?= cmp
+        renderDocument (DMap [("key1", DMap[("key2", DNull)])]) @?= "---\nkey1: \n key2: null\n"
     , testCase "Coords Dmap" $            
         renderDocument (DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)],DMap [("col",DInteger 6),("row",DInteger 6)],DMap [("col",DInteger 5),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 4)],DMap [("col",DInteger 7),("row",DInteger 3)],DMap [("col",DInteger 7),("row",DInteger 2)],DMap [("col",DInteger 4),("row",DInteger 9)],DMap [("col",DInteger 5),("row",DInteger 9)],DMap [("col",DInteger 6),("row",DInteger 9)]])]) @?= cmp2
     , testCase "Tricky case" $          
@@ -237,18 +263,18 @@ trickyCaseString :: String
 trickyCaseString = unlines [
    "---",
    "key1: ",
-   "  key2: ",
+   " key2: ",
+   "  - 1",
+   "  - ",
+   "   key3: ",
    "    - 1",
-   "    - ",
-   "      key3: ",
-   "        - 1",
-   "        - 3",
-   "        - null",
-   "        - ",
-   "          '': null",
-   "        - []",
-   "      key4: ''",  
+   "    - 3",
    "    - null",
+   "    - ",
+   "     '': null",
+   "    - {}",
+   "   key4: ''",  
+   "  - null",
    "key5: []"
  ]
 
@@ -271,22 +297,22 @@ listInList :: String
 listInList = unlines [
      "---"
    , "- "
-   , "  - 1"
-   , "  - 2"
+   , " - 1"
+   , " - 2"
    , "- "
-   , "  - 3"
-   , "  - 4"
-   , "  - "
-   , "    - 5"
-   , "    - 5"
+   , " - 3"
+   , " - 4"
+   , " - "
+   , "  - 5"
+   , "  - 5"
   ]
 
 nestedListandPrim :: String 
 nestedListandPrim = unlines [
     "---"
     ,"- "
-    ,"  - 1"
-    ,"  - 2"
+    ," - 1"
+    ," - 2"
     ,"- null"
   ]
 
@@ -294,17 +320,17 @@ oneDMapinDList :: String
 oneDMapinDList = unlines [
     "---" 
    ,"- " 
-   ,"  key: 5"
-   ,"  key2: \"4\""
+   ," key: 5"
+   ," key2: \"4\""
  ]
 
 fewDMapsinDList :: String 
 fewDMapsinDList = unlines [
     "---"
    ,"- "
-   ,"  key: 5"
+   ," key: 5"
    ,"- "
-   ,"  key2: \"4\""
+   ," key2: \"4\""
  ]
 
 aFewMappings :: String 
@@ -319,105 +345,56 @@ listmaplist :: String
 listmaplist = unlines [
     "---"
     ,"- "
-    ,"  key: "
-    ,"    - 5"
+    ," key: "
+    ,"  - 5"
  ] 
 
 maplistmap :: String 
 maplistmap = unlines [
     "---"
    ,"KEY: "
-   ,"  - "
-   ,"    key1: null"
-   ,"    key2: null"
-   ,"    key3: "
-   ,"      - 1"
-   ,"      - 2"
+   ," - "
+   ,"  key1: null"
+   ,"  key2: null"
+   ,"  key3: "
+   ,"   - 1"
+   ,"   - 2"
  ]
-
-cmp :: String 
-cmp = unlines [
-   "---"
-   ,"number_of_hints: 10"
-   ,"occupied_cols: "
-   ,"  head: 1"
-   ,"  tail: "
-   ,"    head: 1"
-   ,"    tail: "
-   ,"      head: 2"
-   ,"      tail: "
-   ,"        head: 3"
-   ,"        tail: "
-   ,"          head: 1"
-   ,"          tail: "
-   ,"            head: 4"
-   ,"            tail: "
-   ,"              head: 2"
-   ,"              tail: "
-   ,"                head: 4"
-   ,"                tail: "
-   ,"                  head: 2"
-   ,"                  tail: "
-   ,"                    head: 0"
-   ,"                    tail: null"
-   ,"occupied_rows: "
-   ,"  head: 2"
-   ,"  tail: "
-   ,"    head: 0"
-   ,"    tail: "
-   ,"      head: 2"
-   ,"      tail: "
-   ,"        head: 2"
-   ,"        tail: "
-   ,"          head: 2"
-   ,"          tail: "
-   ,"            head: 0"
-   ,"            tail: "
-   ,"              head: 6"
-   ,"              tail: "
-   ,"                head: 0"
-   ,"                tail: "
-   ,"                  head: 3"
-   ,"                  tail: "
-   ,"                    head: 3"
-   ,"                    tail: null"
-   ,"game_setup_id: \"31f1c720-e0e7-47e7-be5c-a94d32e1088d\""
-  ]
 
 cmp2 :: String
 cmp2 = unlines [
    "---"
    ,"coords: "
-   ,"  - "
-   ,"    col: 8"
-   ,"    row: 6"
-   ,"  - "
-   ,"    col: 7"
-   ,"    row: 6"
-   ,"  - "
-   ,"    col: 6"
-   ,"    row: 6"
-   ,"  - "
-   ,"    col: 5"
-   ,"    row: 6"
-   ,"  - "
-   ,"    col: 7"
-   ,"    row: 4"
-   ,"  - "
-   ,"    col: 7"
-   ,"    row: 3"
-   ,"  - "
-   ,"    col: 7"
-   ,"    row: 2"
-   ,"  - "
-   ,"    col: 4"
-   ,"    row: 9"
-   ,"  - "
-   ,"    col: 5"
-   ,"    row: 9"
-   ,"  - "
-   ,"    col: 6"
-   ,"    row: 9"
+   ," - "
+   ,"  col: 8"
+   ,"  row: 6"
+   ," - "
+   ,"  col: 7"
+   ,"  row: 6"
+   ," - "
+   ,"  col: 6"
+   ,"  row: 6"
+   ," - "
+   ,"  col: 5"
+   ,"  row: 6"
+   ," - "
+   ,"  col: 7"
+   ,"  row: 4"
+   ," - "
+   ,"  col: 7"
+   ,"  row: 3"
+   ," - "
+   ,"  col: 7"
+   ,"  row: 2"
+   ," - "
+   ,"  col: 4"
+   ,"  row: 9"
+   ," - "
+   ,"  col: 5"
+   ,"  row: 9"
+   ," - "
+   ,"  col: 6"
+   ,"  row: 9"
   ]
 
 initialState :: State
