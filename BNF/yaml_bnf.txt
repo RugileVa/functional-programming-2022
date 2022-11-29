@@ -32,10 +32,10 @@
 <empty-map>     ::= '{' '}'
 
 <list>		      ::= <empty-list> | {<list-elem>}
-<list-elem>       ::= <indentation> <list-st> [<new-line] <data-types> 
+<list-elem>       ::= {<indentation>} <list-st> [<new-line] <data-types> 
 
 <map>		      ::= <empty-map> | {<map>}
-<map-elem>        ::= <indentation> <key-str> [<new-line] <data-types> 
+<map-elem>        ::= {<indentation>} <key-str> [<new-line] <data-types> 
 
 <starter> 	 ::= '-' '-' '-' '\n'
 

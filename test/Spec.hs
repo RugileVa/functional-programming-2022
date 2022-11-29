@@ -67,7 +67,7 @@ fromYamlTests = testGroup "Document from yaml"
     , testCase "Simple DMap -> DMap" $            
         parseDocument "---\nkey: \n  key: null\n" @?= Right (DMap [("key", DMap[("key", DNull)])])
     , testCase "Complicated DMap -> DMap" $   
-         parseDocument cmp' @?= Right (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720_e0e7_47e7_be5c_a94d32e1088d")])
+         parseDocument cmp' @?= Right (DMap [("number_of_hints",DInteger 10),("occupied_cols",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 1),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 4),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DNull)])])])])])])])])])]),("occupied_rows",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 2),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 6),("tail",DMap [("head",DInteger 0),("tail",DMap [("head",DInteger 3),("tail",DMap [("head",DInteger 3),("tail",DNull)])])])])])])])])])]),("game_setup_id",DString "31f1c720-e0e7-47e7-be5c-a94d32e1088d")])
     , testCase "Coords Dmap1 style" $            
         parseDocument cmp2 @?= Right (DMap [("coords",DList [DMap [("col",DInteger 8),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 6)],DMap [("col",DInteger 6),("row",DInteger 6)],DMap [("col",DInteger 5),("row",DInteger 6)],DMap [("col",DInteger 7),("row",DInteger 4)],DMap [("col",DInteger 7),("row",DInteger 3)],DMap [("col",DInteger 7),("row",DInteger 2)],DMap [("col",DInteger 4),("row",DInteger 9)],DMap [("col",DInteger 5),("row",DInteger 9)],DMap [("col",DInteger 6),("row",DInteger 9)]])])
     , testCase "Coords Dmap2 style" $            
@@ -163,7 +163,7 @@ cmp' = unlines [
    ,"                  tail: "
    ,"                    head: 3"
    ,"                    tail: null"
-   ,"game_setup_id: \"31f1c720_e0e7_47e7_be5c_a94d32e1088d\""
+   ,"game_setup_id: \"31f1c720-e0e7-47e7-be5c-a94d32e1088d\""
   ]
 
 cmp22 :: String

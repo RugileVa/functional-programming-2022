@@ -114,7 +114,7 @@ stringLiteralParser = Parser $ \input ->
         result = takeWhile myPredicate input
     in 
         case result of 
-        [] -> Left $ "Unexpected end of input"  
+        [] -> Left $ "Unexpected end of input in string"  
         _  -> Right (result, drop (length result) input)
     where 
         myPredicate :: Char -> Bool
@@ -128,13 +128,6 @@ stringInQParser = do
     nl 
     return str
 
-emptyDStringSpaces :: Parser Document 
-emptyDStringSpaces = do
-    stringParser "'" 
-    str <- spaceParser 
-    stringParser "'"
-    return $ DString str
-
 emptydString :: Parser Document 
 emptydString = (stringParser "'" >> stringParser "'") <|> stringParser "\"\"" >> nl >> return(DString "")
 
@@ -145,7 +138,7 @@ dNull :: Parser Document
 dNull = DNull <$ stringParser "null\n"
 
 dString :: Parser Document 
-dString = DString <$> stringInQParser <|> emptydString <|> emptyDStringSpaces
+dString = DString <$> stringInQParser <|> emptydString 
 
 dPrimitiveValue :: Parser Document
 dPrimitiveValue = dInteger <|> dNull <|> dString 
@@ -180,11 +173,10 @@ keyParser :: Parser String
 keyParser = Parser $ \input -> 
     let  
         result = takeWhile myPredicate input
-        x      = take 1 (drop (length result) input) 
     in 
-        case x of 
-        ":"  -> Right (result, drop (length result) input) 
-        _    -> Left $ "Unexpected literal in key " ++ x 
+        case result of 
+        []   -> Left "Empty key" 
+        _    -> Right (result, drop (length result) input) 
     where 
         myPredicate :: Char -> Bool
         myPredicate c = isAlpha c || c == '_' || c == '-'
@@ -193,8 +185,10 @@ keyParserEmpty :: Parser String
 keyParserEmpty  = stringParser "''" >> return ""
 
 mapElemParser :: Int -> Parser (String, Document)
-mapElemParser s = do  
-    key <- (keyParser <|> keyParserEmpty) <* keyCol
+mapElemParser s = do 
+    optionalP (charParser '\'' )
+    key <- keyParser <|> keyParserEmpty
+    optionalP (charParser '\'' ) <* keyCol
     doc <- listParser s <|> docParser (s+2) 
     return (key, doc)
 
