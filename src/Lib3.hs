@@ -3,6 +3,8 @@
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 {-# OPTIONS_GHC -Wno-unused-do-bind #-}
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
+{-# OPTIONS_GHC -Wno-unused-matches #-}
 
 module Lib3 (parseDocument, hint, gameStart, GameStart, Hint) where
 import Lib2 (parseGameStartDocument, checkKey, getCoord, toggleShipHint)
@@ -105,30 +107,36 @@ intParser = do
     nl 
     return n
 
--- digits, ws, letters, '_', '-'
+-- digits, ws, letters, '-'
 stringLiteralParser :: Parser String 
 stringLiteralParser = Parser $ \input -> 
     let 
         result = takeWhile myPredicate input
-        x      = take 1 (drop (length result) input) 
     in 
-        case x of 
-        "\"" -> Right (result, drop (length result) input) 
-        _    -> Left $ "Unexpected string literal " ++ x 
+        case result of 
+        [] -> Left $ "Unexpected end of input"  
+        _  -> Right (result, drop (length result) input)
     where 
         myPredicate :: Char -> Bool
-        myPredicate c = isAlphaNum c || c == ' ' || c == '_' || c == '-'
+        myPredicate c = isAlphaNum c || c == ' ' || c == '-'
 
 stringInQParser :: Parser String 
 stringInQParser = do 
-    charParser '"'
+    optionalP (stringParser "\"" <|> stringParser "'") 
     str <- stringLiteralParser 
-    charParser '"'
+    optionalP (stringParser "\"" <|> stringParser "'") 
     nl 
     return str
 
+emptyDStringSpaces :: Parser Document 
+emptyDStringSpaces = do
+    stringParser "'" 
+    str <- spaceParser 
+    stringParser "'"
+    return $ DString str
+
 emptydString :: Parser Document 
-emptydString = stringParser "''" <|> stringParser "\"\"" >> nl >> return(DString "")
+emptydString = (stringParser "'" >> stringParser "'") <|> stringParser "\"\"" >> nl >> return(DString "")
 
 dInteger :: Parser Document 
 dInteger =  DInteger <$> intParser
@@ -137,7 +145,7 @@ dNull :: Parser Document
 dNull = DNull <$ stringParser "null\n"
 
 dString :: Parser Document 
-dString = DString <$> stringInQParser <|> emptydString
+dString = DString <$> stringInQParser <|> emptydString <|> emptyDStringSpaces
 
 dPrimitiveValue :: Parser Document
 dPrimitiveValue = dInteger <|> dNull <|> dString 
