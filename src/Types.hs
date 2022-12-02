@@ -18,6 +18,8 @@ import Data.String.Conversions
 import Test.QuickCheck.Arbitrary
 import Test.QuickCheck.Gen as Gen
 
+import qualified Data.Map as Map
+
 -- Data structure used to post ship allocations
 -- to game server (for check). Do not modify.
 newtype Check = Check {
@@ -103,7 +105,7 @@ arbitraryDMap :: Gen Document
 arbitraryDMap = do
     s <- getSize
     n <- choose (0, min 4 s)
-    DMap <$> vectorOf n ((,) <$> arbitraryK <*> arbitraryDocument)
+    DMap . Map.toList . Map.fromList <$> vectorOf n ((,) <$> arbitraryK <*> arbitraryDocument)
     where
         arbitraryK = do
             s <- getSize
@@ -115,3 +117,4 @@ class ToDocument a where
 
 class FromDocument a where
     fromDocument :: Document -> Either String a
+
