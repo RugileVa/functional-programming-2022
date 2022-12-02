@@ -17,25 +17,25 @@
 
 <digit>         ::= '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9'
 <natural-number>::= <digit> { <digit> }  
-<integer>       ::= ['('] '-' <natural-number> [')'] <new-line> | <natural-number> <new-line>
+<integer>       ::= '-' <natural-number> <new-line> | '(' '-' <natural-number> ')' <new-line> | <natural-number> <new-line>
 <literal>       ::= <letter> | <digit> | <whitespace> | <dash>
-<string>        ::= ['"'] { <literal> } ['"'] <new-line> | ['''] { <literal> } ['''] <new-line>
+<string>        ::= '"' { <literal> } '"' <new-line> | ''' { <literal> } ''' <new-line> 
 <null>          ::= 'null' <new-line>
 <primitive>     ::= <integer> | <string> | <null>
 
-<list-st>       ::= '-' ' '
-<key-str>       ::= {<letter>} | ''' '''
-<map-key>       ::= <key-str> ':' <ws>
-<indentation>   ::= {<ws> <ws>}
+<list-st>       ::= '-' <ws> | '-' <new-line> | '-' <ws> <new-line> 
+<key-str>       ::= {<letter>} | ''' <letter> ''' | ''' '''
+<map-key>       ::= <key-str> ':' <ws> | <key-str> ':' <new-line> | <key-str> ':' <ws> <new-line> 
+<indentation>   ::= <ws> <ws>
 
 <empty-list> 	::= '[' ']'
 <empty-map>     ::= '{' '}'
 
 <list>		      ::= <empty-list> | {<list-elem>}
-<list-elem>       ::= {<indentation>} <list-st> [<new-line] <data-types> 
+<list-elem>       ::= {<indentation>} <list-st> <data-types> 
 
 <map>		      ::= <empty-map> | {<map>}
-<map-elem>        ::= {<indentation>} <key-str> [<new-line] <data-types> 
+<map-elem>        ::= {<indentation>} <key-str> <data-types> 
 
 <starter> 	 ::= '-' '-' '-' '\n'
 
