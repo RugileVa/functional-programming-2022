@@ -5,7 +5,7 @@ import Data.String.Conversions
 import Data.Yaml as Y ( encodeWith, defaultEncodeOptions, defaultFormatOptions, setWidth, setFormat)
 
 import Lib2 (renderDocument, gameStart, hint)
-import Lib3 (parseDocument)
+import Lib4 (parseDocument)
 import Types (Document(..))
 import Lib1 (State(..), Cell(..))
 

@@ -64,7 +64,7 @@ wS nestLevel = take nestLevel $ cycle " "
 -- render document su minusais
 convertPrimitiveToYaml :: Document -> String
 convertPrimitiveToYaml = f where
-    f (DInteger i) =  if i >= 0 then show i else  "(" ++ show i ++ ")" 
+    f (DInteger i) = show i 
     f (DString "") = "''"
     f (DString s) = show s
     f DNull = "null"
