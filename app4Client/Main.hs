@@ -13,8 +13,10 @@ import Data.Text as T ( concat, drop, pack, unpack, Text )
 import Data.Text.IO as TIO ( hPutStrLn, putStrLn )
 import Data.List.Split as S ( splitOn )
 import Data.Char (isSpace)
+import Lib1 (State (..), render, fromDocument, toDocument)
 import Lib2 ( renderDocument )
 import Lib4 ( parseDocument )
+import Types (Document (..))
 import Network.Wreq ( post, postWith, defaults, header, responseBody, statusCode )
 import qualified Network.Wreq as Wreq
 
@@ -48,7 +50,7 @@ cmd :: String -> Repl ()
 cmd c
   | trim c == commandGetId = registerNewGame
   | trim c == commandShow = makeShowRequest 
-  | commandToggle L.isPrefixOf trim c = do
+  | commandToggle `L.isPrefixOf` trim c = do
     case tokens c of
       [_] -> liftIO $ Prelude.putStrLn $ "Illegal format, command \"" ++ commandToggle ++ "\" expects x y pair as argument"
       t   -> makeToggleRequest (L.drop 1 t) 
@@ -77,7 +79,7 @@ makeShowRequest :: Repl()
 makeShowRequest = do 
   url  <- lift get
   resp <- liftIO $ Wreq.get (url ++ "/show")
-  let respDoc = Lib.parseDocument (cs (resp ^. responseBody))
+  let respDoc = Lib4.parseDocument (cs (resp ^. responseBody))
   case (respDoc :: Either String Document) of
     Right (DString m) -> liftIO $ Prelude.putStrLn $ m
     Right doc -> do
@@ -93,7 +95,7 @@ makeToggleRequest [r,c] = do
   let opts = defaults & header "Content-type" .~ ["text/x-yaml"]
   let body = cs $ renderDocument $ DString (r ++ " " ++ c) :: B.ByteString
   resp <- liftIO $ postWith opts (url ++ "/toggle") body
-  let doc = Lib.parseDocument $ cs (resp ^. responseBody)
+  let doc = Lib4.parseDocument $ cs (resp ^. responseBody)
   case (doc :: Either String Document) of
     Right (DString d) -> liftIO $ Prelude.putStrLn d 
     Left _            -> liftIO $ Prelude.putStrLn "Parsing error"    

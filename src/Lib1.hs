@@ -6,7 +6,7 @@
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 {-# OPTIONS_GHC -Wno-missing-fields #-}
 module Lib1(
-    State(..), Cell(..), append, emptyState, gameStart, hint, render, mkCheck, toggle, toggleShipHint, toggleCell, removeNth
+    State(..), Cell(..), append, emptyState, gameStart, hint, render, mkCheck, toggle, toggleShipHint, toggleCell, removeNth, fromDocument, toDocument
 ) where
 
 import Types

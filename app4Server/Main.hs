@@ -9,9 +9,10 @@ import Data.IORef
 import Data.Text (Text, pack, unpack)
 import Data.HashMap.Strict as Map
 import GHC.Conc (TVar, newTVarIO, readTVarIO, atomically, STM, writeTVar, readTVar, retry)
-import Lib1 (toggle, State (..), Cell(..))
+import Lib1 (toggle, State (..), Cell(..), toDocument, fromDocument)
 import Lib2 (renderDocument)
 import Lib4 (parseDocument, tokens)
+import Types (Document (..))
 import Data.UUID.V4 ( nextRandom)
 import Data.UUID (toText, toString, UUID)
 import Control.Monad.Cont (MonadIO(liftIO))
@@ -28,7 +29,7 @@ type Api = SpockM () () ServerState ()
 
 app :: Api
 app = do
-    get ("new/getGameId") $ do    -- uzregint nauja zaidima
+    get ("new/getGameId") $ do    
         st <- getState
         id <- liftIO nextRandom   
         _  <- liftIO $ atomically $ insertNewGame st id
