@@ -1,4 +1,4 @@
-"stack run bimaru-client-4 new" to play a new game
+1. stack build 2. stack run bimaru-server-4 & (sleep 1 && stack run bimaru-client-4 new) to play a new game
 
 # bimaru-client
 
