@@ -51,6 +51,7 @@ library
     , text
     , transformers
     , unordered-containers
+    , uuid
     , vector
     , wreq
     , yaml
@@ -80,6 +81,7 @@ executable bimaru-client-1
     , text
     , transformers
     , unordered-containers
+    , uuid
     , vector
     , wreq
     , yaml
@@ -109,6 +111,7 @@ executable bimaru-client-2
     , text
     , transformers
     , unordered-containers
+    , uuid
     , vector
     , wreq
     , yaml
@@ -138,6 +141,69 @@ executable bimaru-client-3
     , text
     , transformers
     , unordered-containers
+    , uuid
+    , vector
+    , wreq
+    , yaml
+  default-language: Haskell2010
+
+executable bimaru-client-4
+  main-is: Main.hs
+  other-modules:
+      Paths_bimaru_client
+  hs-source-dirs:
+      app4Client
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , aeson
+    , base >=4.7 && <5
+    , base64
+    , bimaru-client
+    , bytestring
+    , containers
+    , lens
+    , process
+    , repline
+    , scientific
+    , split
+    , string-conversions
+    , text
+    , transformers
+    , unordered-containers
+    , uuid
+    , vector
+    , wreq
+    , yaml
+  default-language: Haskell2010
+
+executable bimaru-server-4
+  main-is: Main.hs
+  other-modules:
+      Paths_bimaru_client
+  hs-source-dirs:
+      app4Server
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      QuickCheck
+    , Spock
+    , aeson
+    , base >=4.7 && <5
+    , base64
+    , bimaru-client
+    , bytestring
+    , containers
+    , lens
+    , mtl
+    , process
+    , repline
+    , scientific
+    , split
+    , string-conversions
+    , text
+    , transformers
+    , unordered-containers
+    , uuid
     , vector
     , wreq
     , yaml
@@ -171,6 +237,7 @@ test-suite bimaru-client-test
     , text
     , transformers
     , unordered-containers
+    , uuid
     , vector
     , wreq
     , yaml

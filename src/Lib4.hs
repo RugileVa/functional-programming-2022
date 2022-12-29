@@ -6,8 +6,11 @@
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 {-# OPTIONS_GHC -Wno-unused-matches #-}
 
-module Lib4 (parseDocument) where
+module Lib4 (parseDocument, tokens) where
 import Types (Document(..))
+
+import qualified Data.List as L
+import Data.List.Split as S ( splitOn )
 
 import Control.Applicative ((<|>), many) 
 import Control.Monad.Trans.State.Strict (State, get, put, runState)
@@ -33,7 +36,7 @@ data ParseError = UnexpectedChar Char
 instance Semigroup ParseError where _ <> q = q 
 instance Monoid ParseError where mempty = UnexpectedEof 
   
-type Parser a = ExceptT ParseError (State String) a 
+type Parser a = ExceptT ParseError (Control.Monad.Trans.State.Strict.State String) a 
 
 runParser :: Parser a -> String -> (Either ParseError a, String)
 runParser parser = runState (runExceptT parser)
@@ -197,3 +200,8 @@ parseDoc :: Parser Document
 parseDoc = do
     op starter 
     doc 0
+
+----------------------------------
+
+tokens :: String -> [String]
+tokens s = L.filter (not . Prelude.null) $ S.splitOn " " s

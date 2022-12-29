@@ -38,6 +38,7 @@ dependencies:
 - yaml
 - vector
 - containers
+- uuid
 
 ghc-options:
 - -Wall
@@ -81,6 +82,26 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - bimaru-client
+  bimaru-client-4:
+    main:                Main.hs
+    source-dirs:         app4Client
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bimaru-client
+  bimaru-server-4:
+    main:                Main.hs
+    source-dirs:         app4Server
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bimaru-client
+    - Spock
+    - mtl
 
 tests:
   bimaru-client-test:
