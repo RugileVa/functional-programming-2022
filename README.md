@@ -1,3 +1,5 @@
+"stack run bimaru-client-4 new" to play a new game
+
 # bimaru-client
 
 We will solve [bimaru](https://en.wikipedia.org/wiki/Battleship_(puzzle)) puzzles!
