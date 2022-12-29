@@ -31,6 +31,58 @@ data State = State {
     hint_number :: Int
 } deriving (Eq, Show)
 
+
+instance ToDocument State where 
+    toDocument state = DList[DMap[("cols", DList (reverse $ tolist (rowData state) []))], DMap[("rows", DList (reverse $ tolist (colData state) []))], DMap[("board", DList (reverse $ mapcells (board state) []))]]
+
+tolist :: [Int] -> [Document] -> [Document] 
+tolist [] list = list 
+tolist xs list = Prelude.foldl (\list x -> DInteger x : list) list xs
+
+mapcells :: [Cell] -> [Document] -> [Document]
+mapcells [] list = list
+mapcells xs list = Prelude.foldl (\list x -> DString (show x) : list) list xs 
+
+instance FromDocument State where 
+    fromDocument doc = do
+        (newRowData, newColData, newBoard) <- findDocument doc
+        Right State {
+        rowData = newRowData,
+        colData = newColData,
+        board = newBoard,
+        document = DNull,
+        hint_number = 0
+        }
+
+findDocument :: Document -> Either String ([Int],[Int],[Cell])
+findDocument (DList d) = do
+    case getByKey d  "cols" of 
+        Left _ -> Left "Could not parse document"
+        Right (DList doc1) -> do 
+            let coldata = traverselist doc1 []
+            case getByKey d "rows" of 
+                Left _ -> Left "Could not parse document"
+                Right (DList doc2) -> do 
+                    let rowdata = traverselist doc2 []
+                    case getByKey d "board" of 
+                        Left _ -> Left "Could not parse document"
+                        Right (DList doc3) -> do 
+                            let boarddata = traverseboard doc3 []
+                            return (coldata, rowdata, boarddata)
+
+getByKey :: [Document] -> String -> Either String Document
+getByKey [] key = Left $ "Error when parsing a document in key"
+getByKey (DMap[(str, d)]:xs) key = if key == str then Right d else getByKey xs key
+
+traverselist :: [Document] -> [Int] -> [Int]
+traverselist [] list = list 
+traverselist (DInteger x:xs) list = traverselist xs (x:list)
+
+traverseboard :: [Document] -> [Cell] -> [Cell]
+traverseboard [] list = list 
+traverseboard (DString " ":xs) list = traverseboard xs (Blank:list)
+traverseboard (DString "x":xs) list = traverseboard xs (Ship:list)
+
 -- IMPLEMENT
 -- This is very initial state of your program
 emptyState :: State
