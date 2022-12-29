@@ -9,6 +9,9 @@
 module Lib4 (parseDocument) where
 import Types (Document(..))
 
+import qualified Data.List as L
+import Data.List.Split as S ( splitOn )
+
 import Control.Applicative ((<|>), many) 
 import Control.Monad.Trans.State.Strict (State, get, put, runState)
 import Control.Monad.Trans.Except ( ExceptT, runExceptT, throwE, catchE) 
@@ -197,3 +200,8 @@ parseDoc :: Parser Document
 parseDoc = do
     op starter 
     doc 0
+
+----------------------------------
+
+tokens :: String -> [String]
+tokens s = L.filter (not . Prelude.null) $ S.splitOn " " s
